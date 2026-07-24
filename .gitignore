@@ -1,0 +1,38 @@
+# Intermedios: regenerables con `make datos` / `make sinteticos`
+data/processed/*
+data/folds/*
+!data/processed/.gitkeep
+!data/folds/.gitkeep
+
+# Logs y salida de Apollo
+logs/*
+!logs/.gitkeep
+
+# Apollo escribe estos si no se le da outputDirectory
+*.F12
+*_output.txt
+*_estimates.csv
+*_iterations.csv
+.RData
+.Rhistory
+
+# Biogeme, si se usa como alternativa
+biogeme.toml
+__bioge*
+*.iter
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# R
+.Rproj.user/
+renv/library/
+renv/staging/
+
+# Sistema
+.DS_Store
+Thumbs.db

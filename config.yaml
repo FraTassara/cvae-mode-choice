@@ -1,0 +1,242 @@
+# ============================================================================ #
+#  Configuración compartida por Python y R.
+#
+#  Este archivo es la ÚNICA fuente de verdad. Python lo lee con `yaml.safe_load`
+#  y R con `yaml::read_yaml`. Si una ruta, una semilla o una especificación de
+#  modelo aparece hard-codeada en un script, es un bug.
+# ============================================================================ #
+
+proyecto:
+  nombre: cvae-mode-choice
+  # Todas las rutas son RELATIVAS a la raíz del repo. Nunca absolutas.
+  # Python resuelve con pathlib; R con here::here().
+  rutas:
+    raw:        data/raw
+    folds:      data/folds
+    processed:  data/processed
+    results:    results
+    logs:       logs
+
+# ---------------------------------------------------------------------------- #
+#  Semillas. Documentadas explícitamente para que cualquiera reproduzca los
+#  mismos folds y las mismas muestras sintéticas.
+# ---------------------------------------------------------------------------- #
+semillas:
+  folds:        42      # partición de la validación cruzada
+  cvae_entrena: 1234    # inicialización de pesos del CVAE
+  cvae_muestreo: 2024   # muestreo del espacio latente
+  oversampling: 7       # ROS / SMOTE
+
+# ---------------------------------------------------------------------------- #
+#  Diseño experimental
+# ---------------------------------------------------------------------------- #
+validacion:
+  n_splits: 5
+  n_repeats: 10
+  estratificado: true
+
+metodos:
+  - original        # sin balanceo (línea base, §2.2)
+  - ROS
+  - SMOTE
+  - CVAE
+  - class_weights   # §2.9 — pondera la verosimilitud, no genera datos
+
+# ---------------------------------------------------------------------------- #
+#  Datasets. `modelo` define la especificación de utilidades que consume Apollo;
+#  `cvae` define cómo se generan los sintéticos.
+# ---------------------------------------------------------------------------- #
+datasets:
+
+  sm_centro:
+    archivo: sm_database.csv
+    sep: ","
+    id_col: ID
+    choice_col: ICH
+    clases: [1, 4, 5]
+
+    modelo:
+      asc_fija: asc_metro
+      alternativas:
+        - {id: 1, nombre: car_driver, avail: DISP1,
+           atributos: {b_tcw: CTOT1_w, b_ivt: TVIA1, b_wkt: TCAM1,
+                       b_autlic: AUTLIC, b_mi_cd: ILM}}
+        - {id: 4, nombre: metro, avail: DISP4,
+           atributos: {b_tcw: CTOT4_w, b_ivt: TVIA4, b_wkt: TCAM4,
+                       b_wt: TESP4}}
+        - {id: 5, nombre: bus, avail: DISP5,
+           atributos: {b_tcw: CTOT5_w, b_ivt: TVIA5, b_wkt: TCAM5,
+                       b_wt: TESP5, b_mi_bus: ILM}}
+      signos_esperados: {b_ivt: -1, b_wkt: -1, b_wt: -1, b_tcw: -1}
+
+    cvae:
+      # Columnas que el CVAE NO debe modelar: identificadores, variables fuera
+      # del modelo y atributos de los modos 2 y 3, que no forman parte de la
+      # especificación de SM-Centro. Replica el `drop_cols` de los notebooks
+      # originales. Se remuestrean de la distribución empírica por modo.
+      excluir: [ID, JEFH, HTS,
+                TVIA2, TCAM2, CTOT2_w, DISP2,
+                TVIA3, TCAM3, TESP3, CTOT3_w, DISP3]
+      variables:
+        SEXO:   binary
+        AUTLIC: empirical
+        DISP1:  {tipo: availability, depende: [TVIA1, TCAM1, CTOT1_w]}
+        DISP4:  {tipo: availability, depende: [TVIA4, TCAM4, TESP4, CTOT4_w]}
+        DISP5:  {tipo: availability, depende: [TVIA5, TCAM5, TESP5, CTOT5_w]}
+        TVIA1:  zero_inflated
+        TVIA4:  zero_inflated
+        TVIA5:  zero_inflated
+        TCAM1:  zero_inflated
+        TCAM4:  zero_inflated
+        TCAM5:  zero_inflated
+        TESP4:  zero_inflated
+        TESP5:  zero_inflated
+      arquitectura:
+        n_z: 2
+        encoder_dims: [13, 14]
+        decoder_dim: 13
+        batch_size: 64
+        epochs: 120
+        kl_warmup_epochs: 10
+        learning_rate: 0.001      # ajustable por 07_hiperparametros.py
+      generacion:
+        balance_to: majority
+        confianza_elipse: 0.80
+
+  lc_centro:
+    archivo: lc_database.csv
+    sep: ","
+    id_col: ID
+    choice_col: ICH
+    clases: [1, 2, 4, 5]
+
+    modelo:
+      asc_fija: asc_metro
+      alternativas:
+        - {id: 1, nombre: car_driver, avail: DISP1,
+           atributos: {b_tcw: CTOT1_w, b_ivt: TVIA1, b_wkt: TCAM1, b_autlic: AUTLIC}}
+        - {id: 2, nombre: car_passenger, avail: DISP2,
+           atributos: {b_tcw: CTOT2_w, b_ivt: TVIA2, b_wkt: TCAM2, b_sex_cp: SEXO}}
+        - {id: 4, nombre: metro, avail: DISP4,
+           atributos: {b_tcw: CTOT4_w, b_ivt: TVIA4, b_wkt: TCAM4, b_wt: TESP4}}
+        - {id: 5, nombre: bus, avail: DISP5,
+           atributos: {b_tcw: CTOT5_w, b_ivt: TVIA5, b_wkt: TCAM5, b_wt: TESP5}}
+      signos_esperados: {b_ivt: -1, b_wkt: -1, b_wt: -1, b_tcw: -1}
+
+    cvae:
+      # Ver nota en sm_centro. Las Condes usa los modos 1, 2, 4 y 5.
+      excluir: [ID, JEFH, HTS,
+                TVIA3, TCAM3, TESP3, CTOT3_w, DISP3]
+      variables:
+        SEXO:   binary
+        AUTLIC: empirical
+        DISP1:  {tipo: availability, depende: [TVIA1, TCAM1, CTOT1_w]}
+        DISP2:  {tipo: availability, depende: [TVIA2, TCAM2, CTOT2_w]}
+        DISP4:  {tipo: availability, depende: [TVIA4, TCAM4, TESP4, CTOT4_w]}
+        DISP5:  {tipo: availability, depende: [TVIA5, TCAM5, TESP5, CTOT5_w]}
+      arquitectura:
+        n_z: 2
+        encoder_dims: [11, 11]
+        decoder_dim: 11
+        batch_size: 32
+        epochs: 150
+        kl_warmup_epochs: 10
+        learning_rate: 0.001      # ajustable por 07_hiperparametros.py
+      generacion:
+        balance_to: majority
+        confianza_elipse: 0.80
+
+  whalen:
+    archivo: whalen_database.csv
+    sep: " "
+    id_col: RespondentID
+    choice_col: choice
+    clases: [1, 2, 3, 4]
+
+    modelo:
+      # Especificación tomada de MNL_WHALEN__Systematic_.R (apollo_probabilities).
+      # Cada modo tiene su propio coeficiente de tiempo (b_tc, b_tw, b_th, b_ttc):
+      # no son genéricos. Lo mismo para solo/shared/densidades.
+      asc_fija: asc_cycling
+      alternativas:
+        - {id: 1, nombre: cycling, avail: avcycle,
+           atributos: {b_tc: timecycle}}
+        - {id: 2, nombre: walking, avail: avwalk,
+           atributos: {b_tw: timewalk, b_lsw: solo, b_lshw: shared,
+                       b_sdw: st_den, b_swd: side_den}}
+        - {id: 3, nombre: hsr, avail: avhsr,
+           atributos: {b_th: timehsr, b_lsh: solo, b_lshh: shared,
+                       b_sh: Shelters_A, b_at: accesshsr,
+                       b_sdh: st_den, b_swdh: side_den}}
+        - {id: 4, nombre: car, avail: avcar,
+           atributos: {b_ttc: timecar, b_lsc: solo, b_lshc: shared,
+                       b_sdc: st_den, b_swdc: side_den, b_parking: parking}}
+      # Tiempos de viaje y de acceso: negativos por teoría. Este dataset no
+      # tiene variable de costo, así que no se puede calcular el valor del tiempo.
+      signos_esperados: {b_tc: -1, b_tw: -1, b_th: -1, b_ttc: -1, b_at: -1}
+
+    cvae:
+      excluir: [RespondentID]
+      variables:
+        avcycle: {tipo: availability, depende: [timecycle]}
+        avwalk:  {tipo: availability, depende: [timewalk]}
+        avhsr:   {tipo: availability, depende: [timehsr, accesshsr]}
+        avcar:   {tipo: availability, depende: [timecar]}
+        parking: binary
+        solo: binary
+        shared: binary
+        Shelters_A: binary
+      arquitectura:
+        n_z: 2
+        encoder_dims: [10, 10]
+        decoder_dim: 10
+        batch_size: 128
+        epochs: 150
+        kl_warmup_epochs: 10
+        learning_rate: 0.001      # ajustable por 07_hiperparametros.py
+      generacion:
+        balance_to: majority
+        confianza_elipse: 0.80
+
+  swissmetro:
+    archivo: swissmetro.csv
+    sep: ";"
+    id_col: ID
+    choice_col: CHOICE
+    clases: [1, 2, 3]
+    # OJO: el script de Apollo filtraba AGE != 6 y el notebook del CVAE no.
+    # Aquí el filtro es explícito y lo aplican AMBOS lados.
+    filtros:
+      - "AGE != 6"
+
+    modelo:
+      asc_fija: asc_sm
+      alternativas:
+        # Este CSV de Swissmetro no trae columnas de disponibilidad, así que se
+        # asume que los tres modos están siempre disponibles (avail vacío -> 1).
+        - {id: 1, nombre: train, avail: null,
+           atributos: {b_time: TRAIN_TT, b_cost: TRAIN_CO}}
+        - {id: 2, nombre: sm, avail: null,
+           atributos: {b_time: SM_TT, b_cost: SM_CO}}
+        - {id: 3, nombre: car, avail: null,
+           atributos: {b_time: CAR_TT, b_cost: CAR_CO}}
+      signos_esperados: {b_time: -1, b_cost: -1}
+
+    cvae:
+      excluir: [ID]
+      variables:
+        AGE: empirical
+        LUGGAGE: empirical
+        GA: binary
+        SM_SEATS: binary
+      arquitectura:
+        n_z: 2
+        encoder_dims: [15, 15]
+        decoder_dim: 15
+        batch_size: 256
+        epochs: 150
+        kl_warmup_epochs: 10
+        learning_rate: 0.001      # ajustable por 07_hiperparametros.py
+      generacion:
+        balance_to: majority
+        confianza_elipse: 0.80
