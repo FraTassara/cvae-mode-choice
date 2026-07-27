@@ -136,11 +136,11 @@ datasets:
         DISP5:  {tipo: availability, depende: [TVIA5, TCAM5, TESP5, CTOT5_w]}
       arquitectura:
         n_z: 2
-        encoder_dims: [11, 11]
-        decoder_dim: 11
-        batch_size: 32
-        epochs: 150
-        kl_warmup_epochs: 10
+        encoder_dims: [13, 6]
+        decoder_dim: 13
+        batch_size: 16
+        epochs: 120
+        kl_warmup_epochs: 0
         learning_rate: 0.001      # ajustable por 07_hiperparametros.py
       generacion:
         balance_to: majority
@@ -188,11 +188,11 @@ datasets:
         Shelters_A: binary
       arquitectura:
         n_z: 2
-        encoder_dims: [10, 10]
-        decoder_dim: 10
-        batch_size: 128
-        epochs: 150
-        kl_warmup_epochs: 10
+        encoder_dims: [13, 6]
+        decoder_dim: 13
+        batch_size: 16
+        epochs: 120
+        kl_warmup_epochs: 0
         learning_rate: 0.001      # ajustable por 07_hiperparametros.py
       generacion:
         balance_to: majority
@@ -231,11 +231,11 @@ datasets:
         SM_SEATS: binary
       arquitectura:
         n_z: 2
-        encoder_dims: [15, 15]
-        decoder_dim: 15
-        batch_size: 256
-        epochs: 150
-        kl_warmup_epochs: 10
+        encoder_dims: [14, 5]
+        decoder_dim: 9
+        batch_size: 16
+        epochs: 120
+        kl_warmup_epochs: 20
         learning_rate: 0.001      # ajustable por 07_hiperparametros.py
       generacion:
         balance_to: majority

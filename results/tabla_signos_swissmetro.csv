@@ -1,0 +1,11 @@
+metodo,coeficiente,signo_esperado,media,pct_particiones_invertido,invertido_en_media
+CVAE,b_time,-1,-0.0068,0.0,False
+CVAE,b_cost,-1,0.0008,1.0,True
+ROS,b_time,-1,-0.0033,0.0,False
+ROS,b_cost,-1,0.0004,1.0,True
+SMOTE,b_time,-1,-0.0036,0.0,False
+SMOTE,b_cost,-1,0.0004,1.0,True
+class_weights,b_time,-1,-0.0033,0.0,False
+class_weights,b_cost,-1,0.0004,1.0,True
+original,b_time,-1,-0.0041,0.0,False
+original,b_cost,-1,0.0003,1.0,True
