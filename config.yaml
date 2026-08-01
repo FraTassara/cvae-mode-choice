@@ -188,11 +188,11 @@ datasets:
         Shelters_A: binary
       arquitectura:
         n_z: 2
-        encoder_dims: [13, 6]
-        decoder_dim: 13
+        encoder_dims: [14, 5]
+        decoder_dim: 9 
         batch_size: 16
         epochs: 120
-        kl_warmup_epochs: 0
+        kl_warmup_epochs: 20
         learning_rate: 0.001      # ajustable por 07_hiperparametros.py
       generacion:
         balance_to: majority
