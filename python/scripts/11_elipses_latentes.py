@@ -5,7 +5,9 @@ Paso 11 — Figuras del espacio latente con elipses de confianza (§2.1a / §3.4
 Reproduce la Figura 3 del paper (scatter del espacio latente 2D con la elipse
 de confianza de cada modo superpuesta), pero con el código corregido: las
 elipses son las que efectivamente se usan para el muestreo estocástico, no una
-ilustración.
+ilustración. Las figuras se generan faceteadas (un panel por modo), con los
+nombres reales de cada modo y el título en inglés, al estilo de las figuras
+originales en R.
 
 Entrena un CVAE sobre TODOS los datos reales del dataset (sin partición: esta
 figura es descriptiva del espacio latente, no una evaluación), codifica cada
@@ -37,6 +39,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cvae.config_repo import cargar  # noqa: E402
 
 
+# Nombre visible del dataset para el título (en inglés).
+DS_DISPLAY = {
+    "sm_centro": "SM-Centro",
+    "lc_centro": "LC-Centro",
+    "swissmetro": "Swissmetro",
+    "whalen": "Whalen",
+}
+# Overrides de nombre de modo donde el title-case no basta.
+NOMBRE_OVERRIDE = {"sm": "Swissmetro"}
+
+
+def _nombre_visible(nombre: str) -> str:
+    """car_driver -> 'Car Driver'; sm -> 'Swissmetro'."""
+    return NOMBRE_OVERRIDE.get(nombre, nombre.replace("_", " ").title())
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dataset", required=True)
@@ -57,6 +75,11 @@ def main() -> None:
     cfg = cargar()
     ds = args.dataset
     d = cfg.dataset(ds)
+
+    # Nombres reales de cada modo, tomados del config (id_de_modo -> nombre).
+    name_map = {a["id"]: _nombre_visible(a["nombre"])
+                for a in d["modelo"]["alternativas"]}
+    ds_titulo = DS_DISPLAY.get(ds, ds)
 
     origen = cfg.ruta_original(ds)
     if not origen.exists():
@@ -110,8 +133,9 @@ def main() -> None:
         ellipses = fit_ellipses(mu, y_plot, confidence=confianza)
         fig = plots.latent_scatter(
             mu, y_plot, ellipses=ellipses, label_map=label_map,
-            title=f"{ds} — espacio latente y elipses al "
-                  f"{int(confianza*100)}%")
+            name_map=name_map,
+            title=f"{ds_titulo} — latent space and "
+                  f"{int(confianza*100)}% confidence ellipses")
         # Sufijo solo cuando hay varios niveles, para no romper el nombre
         # 'elipses_<ds>.png' que ya usa el informe para el 80%.
         if confianza == 0.80 and len(niveles) > 1:

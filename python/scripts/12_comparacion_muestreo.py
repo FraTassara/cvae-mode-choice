@@ -10,7 +10,8 @@ Genera UNA figura por dataset con una fila por modo y dos columnas:
 
 En cada panel se dibujan los puntos reales de la clase (gris), los sintéticos
 (naranja) y el contorno de la elipse. La comparación es sobre el espacio latente
-real del dataset.
+real del dataset. Los rótulos de la figura van en inglés (para el manuscrito) y
+usan los nombres reales de cada modo.
 
 El método anterior NO forma parte del pipeline: se reproduce aquí solo para la
 figura comparativa del informe.
@@ -42,6 +43,20 @@ from cvae.config_repo import cargar  # noqa: E402
 AZUL = "#1F3A5C"
 NARANJA = "#E08A3C"
 GRIS = "#C8C8C8"
+
+# Nombre visible del dataset y overrides de modo (igual que en el paso 11).
+DS_DISPLAY = {
+    "sm_centro": "SM-Centro",
+    "lc_centro": "LC-Centro",
+    "swissmetro": "Swissmetro",
+    "whalen": "Whalen",
+}
+NOMBRE_OVERRIDE = {"sm": "Swissmetro"}
+
+
+def _nombre_visible(nombre: str) -> str:
+    """car_driver -> 'Car Driver'; sm -> 'Swissmetro'."""
+    return NOMBRE_OVERRIDE.get(nombre, nombre.replace("_", " ").title())
 
 
 def _muestreo_uniforme(elipse, n_objetivo, rng, margen=0.15):
@@ -109,9 +124,10 @@ def main() -> None:
     rng = np.random.default_rng(cfg.semillas["cvae_muestreo"])
 
     inv = {v: k for k, v in dataset.label_map.items()}  # interno -> modo real
-    # Nombre legible de cada modo, desde config.yaml.
-    nombres = {int(a["id"]): a["nombre"]
+    # Nombre legible de cada modo, desde config.yaml (Car Driver, Metro, ...).
+    nombres = {int(a["id"]): _nombre_visible(a["nombre"])
                for a in cfg.dataset(ds)["modelo"]["alternativas"]}
+    ds_titulo = DS_DISPLAY.get(ds, ds)
     clases = sorted(ellipses.keys())
     n_modos = len(clases)
 
@@ -122,7 +138,7 @@ def main() -> None:
 
     for i, cls_interna in enumerate(clases):
         modo_real = inv[cls_interna]
-        nombre = nombres.get(modo_real, f"modo {modo_real}")
+        nombre = nombres.get(modo_real, f"mode {modo_real}")
         elipse = ellipses[cls_interna]
         reales = mu[y_plot == cls_interna]
         borde = _ellipse_path(elipse)
@@ -145,28 +161,28 @@ def main() -> None:
         ylim = (cy0 - my, cy1 + my)
 
         for j, (pts, titulo) in enumerate([
-            (sint_unif, "anterior (R): uniforme"),
-            (sint_gauss, "actual (§2.1a): gaussiano"),
+            (sint_unif, "previous (R): uniform"),
+            (sint_gauss, "current (\u00a72.1a): Gaussian"),
         ]):
             ax = axes[i][j]
             ax.scatter(reales[:, 0], reales[:, 1], s=16, c=GRIS, alpha=0.75,
-                       label="reales", zorder=1)
+                       label="real", zorder=1)
             ax.scatter(pts[:, 0], pts[:, 1], s=6, c=NARANJA, alpha=0.5,
-                       label="sintéticos", zorder=2)
+                       label="synthetic", zorder=2)
             ax.plot(borde[:, 0], borde[:, 1], color=AZUL, lw=1.8, zorder=3)
             ax.set_xlim(xlim)
             ax.set_ylim(ylim)
-            ax.set_ylabel(f"{nombre}\nz2" if j == 0 else "")
+            ax.set_ylabel(f"{nombre}\n" r"Z$_2$" if j == 0 else "")
             if i == 0:
                 ax.set_title(titulo, fontsize=11)
             if i == n_modos - 1:
-                ax.set_xlabel("z1")
+                ax.set_xlabel(r"Z$_1$")
             if i == 0 and j == 1:
                 ax.legend(frameon=False, fontsize=8.5, loc="best")
 
-    fig.suptitle(f"{ds} — muestreo dentro de la elipse, por modo\n"
-                 "izquierda: método anterior (no se usa) · "
-                 "derecha: método actual",
+    fig.suptitle(f"{ds_titulo} — sampling within the ellipse, by mode\n"
+                 "left: previous method (unused) · "
+                 "right: current method",
                  y=1.005, fontsize=12)
     fig.tight_layout()
 
