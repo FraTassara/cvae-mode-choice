@@ -210,17 +210,15 @@ datasets:
       - "AGE != 6"
 
     modelo:
-      asc_fija: asc_sm
+      asc_fija: asc_train
       alternativas:
-        # Este CSV de Swissmetro no trae columnas de disponibilidad, así que se
-        # asume que los tres modos están siempre disponibles (avail vacío -> 1).
-        - {id: 1, nombre: train, avail: null,
-           atributos: {b_time: TRAIN_TT, b_cost: TRAIN_CO}}
-        - {id: 2, nombre: sm, avail: null,
-           atributos: {b_time: SM_TT, b_cost: SM_CO}}
-        - {id: 3, nombre: car, avail: null,
-           atributos: {b_time: CAR_TT, b_cost: CAR_CO}}
-      signos_esperados: {b_time: -1, b_cost: -1}
+        - { id: 1, nombre: train, avail: null,
+            atributos: { b_time: TRAIN_TT, b_cost: TRAIN_CO, b_ga: GA } }
+        - { id: 2, nombre: sm,    avail: null,
+            atributos: { b_time: SM_TT, b_cost: SM_CO, b_ga: GA, b_seats: SM_SEATS } }
+        - { id: 3, nombre: car,   avail: null,
+            atributos: { b_time: CAR_TT, b_cost: CAR_CO, b_age: AGE, b_luggage: LUGGAGE } }
+      signos_esperados: { b_time: -1, b_cost: -1 }
 
     cvae:
       excluir: [ID]

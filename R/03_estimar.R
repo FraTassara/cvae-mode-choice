@@ -95,16 +95,24 @@ for (metodo in metodos) {
                             directorio_salida = dir_apollo,
                             silencioso = !args$verbose)
 
-      P <- predecir(ajuste, va, spec, choice_col)
-      m <- calcular_metricas(P, va[[choice_col]])
+      P  <- predecir(ajuste, va, spec, choice_col)
+      m  <- calcular_metricas(P, va[[choice_col]])
       co <- extraer_coeficientes(ajuste$modelo)
+
+      # VTT = beta_tiempo / beta_costo. Los nombres del coeficiente de tiempo y
+      # de costo dependen del dataset (b_ivt/b_tcw en SM y LC; b_time/b_cost en
+      # Swissmetro), así que se eligen según los que existan en `co`. Sin esto,
+      # calcular_vot() usaba los nombres por defecto (b_ivt/b_tcw) y devolvía NA
+      # en Swissmetro.
+      vt <- if ("beta_b_time" %in% names(co)) "b_time" else "b_ivt"
+      vc <- if ("beta_b_cost" %in% names(co)) "b_cost" else "b_tcw"
 
       c(list(dataset = args$dataset, metodo = metodo,
              repeticion = rep_i, fold = fold_i,
              n_train = nrow(tr),
              n_sinteticos = sum(tr$is_synthetic, na.rm = TRUE)),
         m, co,
-        list(vot = calcular_vot(co)))
+        list(vot = calcular_vot(co, beta_tiempo = vt, beta_costo = vc)))
     }, error = function(e) {
       message("  ", etiqueta, ": ERROR — ", conditionMessage(e))
       NULL

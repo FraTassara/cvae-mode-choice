@@ -1,0 +1,3 @@
+metodo,accuracy,f1_macro,loglik,recall_1,recall_2,recall_4,recall_5
+CVAE,0.7206,0.6757,-0.6803,0.732,0.6467,0.971,0.4483
+CVAE_caw,0.7219,0.6772,-0.6807,0.7344,0.6467,0.971,0.4501
