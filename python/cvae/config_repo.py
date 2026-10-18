@@ -88,6 +88,9 @@ class Config:
     def ruta_estimaciones(self, ds: str) -> Path:
         return self.rutas.results / f"estimaciones_{ds}.csv"
 
+    def ruta_estimaciones_completa(self, ds: str) -> Path:
+        return self.rutas.results / f"estimaciones_completa_{ds}.csv"
+
     # ------------------------------------------------------------------ #
     def _config_de_datos(self) -> Dict[str, Any]:
         """

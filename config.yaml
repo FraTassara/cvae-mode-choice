@@ -273,3 +273,70 @@ datasets:
       generacion:
         balance_to: majority
         confianza_elipse: 0.80
+
+# ---------------------------------------------------------------------------- #
+#  Tablas del paper (python/scripts/14_tablas_paper.py). Solo PRESENTACIÓN:
+#  etiquetas, orden y qué celda va en cada tabla, tal como en
+#  docs/Paper_Aceptado_TRR_CVAE.pdf. Ningún número sale de aquí.
+# ---------------------------------------------------------------------------- #
+paper:
+  destino: tablas_paper
+  # Datasets del paper, en su orden (Whalen no está en el paper).
+  datasets:
+    sm_centro: SM-Centro
+    lc_centro: LC-Centro
+    swissmetro: Swissmetro
+  # Métodos y etiquetas en el orden de las Tablas 8 y 9.
+  metodos:
+    original: Original (no balancing)
+    CVAE: CVAE
+    ROS: ROS
+    SMOTE: SMOTE
+    class_weights: Class-weighting
+  # Encabezados cortos y orden de columnas de la Tabla 11.
+  metodos_cortos: {ROS: ROS, SMOTE: SMOTE, CVAE: CVAE, class_weights: Class-w.}
+  tabla_11_metodos: [ROS, SMOTE, CVAE, class_weights]
+  # Nombre de cada modo (id del modelo -> etiqueta del paper, Tabla 2).
+  modos:
+    sm_centro: {1: Car Driver (CD), 4: Metro, 5: Bus}
+    lc_centro: {1: Car Driver (CD), 2: Car Passenger (CP), 4: Metro, 5: Bus}
+    swissmetro: {1: Train, 2: Swiss-metro, 3: Car}
+  # Tabla 6: ROS, SMOTE y CVAE balancean al mismo objetivo; se toma uno y el
+  # script verifica que los tres coincidan.
+  tabla_06_metodo: CVAE
+  tabla_07_metodos: [ROS, SMOTE, CVAE]
+  # Tabla 9: elasticidad propia del tiempo del auto en SM-Centro.
+  tabla_09: {dataset: sm_centro, alternativa: 1, coeficiente: b_ivt}
+  # Tabla 11: parámetro del modelo -> fila del paper, en el orden del paper.
+  # El ASC fijo (modelo.asc_fija) no se reporta. b_mi_* no estaba en la
+  # Tabla 11 publicada pero sí en la especificación (Tabla 4).
+  coeficientes:
+    sm_centro:
+      asc_car_driver: Car Driver ASC
+      asc_bus: Bus ASC
+      b_ivt: Travel Time
+      b_wkt: Walking Time
+      b_wt: Waiting Time
+      b_tcw: Travel Cost
+      b_autlic: AUTLIC
+      b_mi_cd: Monthly Income (CD)
+      b_mi_bus: Monthly Income (Bus)
+    lc_centro:
+      asc_car_driver: Car Driver ASC
+      asc_car_passenger: Car Pass. ASC
+      asc_bus: Bus ASC
+      b_ivt: Travel Time
+      b_wkt: Walking Time
+      b_wt: Waiting Time
+      b_tcw: Travel Cost
+      b_sex_cp: SEX (CP)
+      b_autlic: AUTLIC
+    swissmetro:
+      asc_car: Car ASC
+      asc_sm: SM ASC
+      b_cost: Travel Cost
+      b_time: Travel Time
+      b_age: Age
+      b_luggage: Luggage
+      b_ga: GA
+      b_seats: Seats

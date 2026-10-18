@@ -10,6 +10,7 @@
 #      Rscript R/03_estimar.R --dataset lc_centro
 #      Rscript R/03_estimar.R --dataset lc_centro --metodo CVAE
 #      Rscript R/03_estimar.R --dataset lc_centro --n-repeats 2   # prueba rápida
+#      Rscript R/03_estimar.R --dataset lc_centro --muestra-completa
 # ============================================================================ #
 
 suppressPackageStartupMessages({
@@ -28,7 +29,10 @@ opciones <- list(
               help = "por defecto, todos los de config.yaml"),
   make_option("--n-repeats", type = "integer", default = NULL,
               help = "limitar repeticiones (para pruebas)"),
-  make_option("--verbose", action = "store_true", default = FALSE)
+  make_option("--verbose", action = "store_true", default = FALSE),
+  make_option("--muestra-completa", action = "store_true", default = FALSE,
+              help = paste("estimar UNA vez sobre {ds}_original.csv, sin",
+                           "particiones ni balanceo (columna ORIG. de la Tabla 11)"))
 )
 args <- parse_args(OptionParser(option_list = opciones))
 if (is.null(args$dataset)) stop("Falta --dataset", call. = FALSE)
@@ -46,6 +50,36 @@ folds    <- read.csv(ruta_folds(cfg, args$dataset))
 
 dir_apollo <- ruta(cfg, "logs", "apollo")
 dir.create(dir_apollo, recursive = TRUE, showWarnings = FALSE)
+
+# ---------------------------------------------------------------------------- #
+#  Muestra completa: el MLE sobre todos los datos reales, con su S.E. Es la
+#  columna ORIG. de la Tabla 11 del paper; no entra en las tablas de CV.
+# ---------------------------------------------------------------------------- #
+if (isTRUE(args$`muestra-completa`)) {
+  datos <- original
+  datos$row_id <- seq_len(nrow(datos))
+  ajuste <- estimar_mnl(datos, spec, choice_col,
+                        nombre_modelo = "completa",
+                        directorio_salida = dir_apollo,
+                        silencioso = !args$verbose)
+  co <- extraer_coeficientes(ajuste$modelo)
+  # extraer_coeficientes() guarda el S.E. robusto en se_*; se agrega también
+  # el S.E. clásico (inversa del Hessiano), que es el que reporta el paper.
+  for (nm in names(ajuste$modelo$estimate)) {
+    co[[paste0("se_clasico_", nm)]] <- unname(ajuste$modelo$se[[nm]])
+  }
+  vt <- if ("beta_b_time" %in% names(co)) "b_time" else "b_ivt"
+  vc <- if ("beta_b_cost" %in% names(co)) "b_cost" else "b_tcw"
+  fila <- c(list(dataset = args$dataset, metodo = "original_completa",
+                 n = nrow(datos)),
+            co, list(vot = calcular_vot(co, beta_tiempo = vt, beta_costo = vc)))
+  destino <- ruta_estimaciones_completa(cfg, args$dataset)
+  dir.create(dirname(destino), recursive = TRUE, showWarnings = FALSE)
+  write.csv(as.data.frame(fila, stringsAsFactors = FALSE), destino, row.names = FALSE)
+  message("Muestra completa (", nrow(datos), " filas, convergio = ",
+          co$convergio, ") -> ", destino)
+  quit(save = "no", status = 0)
+}
 
 # ---------------------------------------------------------------------------- #
 resultados <- list()

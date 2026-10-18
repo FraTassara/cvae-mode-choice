@@ -10,7 +10,8 @@ segunda implementación del modelo.
 Entradas (en results/):
     tabla_predictiva_{ds}.csv     -> VTT (columna vot)          [04_reporte.py]
     tabla_coeficientes_{ds}.csv   -> S.E.avg                    [04_reporte.py]
-    efectos_marginales_{ds}.csv   -> elasticidades + ef. marg.  [08_efectos...R]
+    efectos_marginales_{ds}.csv          -> ef. marg. por partición [08_efectos...R]
+    efectos_marginales_resumen_{ds}.csv  -> elasticidades (media/SD) [08_efectos...R]
     jsd_{ds}.csv                  -> benchmark de JSD           [06_diagnosticos]
 
 Salidas (en results/pendientes/), con los nombres del PDF:
@@ -105,26 +106,36 @@ def main() -> None:
             em["alternativa"] = em["alternativa"].astype(str)
 
             # 4. efectos marginales muestra a muestra: un archivo por método
-            cols = ["covariable", "alternativa", "prob_base",
+            cols = ["repeticion", "fold", "convergio",
+                    "covariable", "alternativa", "prob_base",
                     "prob_perturbada", "cambio_abs", "elasticidad"]
             cols = [c for c in cols if c in em.columns]
             for metodo, g in em.groupby("metodo"):
                 g[cols].to_csv(
                     out / f"efectos_marginales_{etq}_{metodo}.csv", index=False)
+        else:
+            print(f"[{ds}] falta {f.name}")
 
-            # 3. elasticidad PROPIA del tiempo: fila cuya covariable es la
-            #    columna de tiempo de su propia alternativa.
+        # 3. elasticidad PROPIA del tiempo, media y SD sobre las particiones
+        #    (N9): fila cuya covariable es la columna de tiempo de su propia
+        #    alternativa.
+        f = res / f"efectos_marginales_resumen_{ds}.csv"
+        if f.exists():
+            er = pd.read_csv(f)
+            er["alternativa"] = er["alternativa"].astype(str)
             tcol = col_tiempo_por_alternativa(dmodelo)
-            mask = em.apply(
+            mask = er.apply(
                 lambda r: r["alternativa"] in tcol
                 and r["covariable"] == tcol[r["alternativa"]], axis=1)
-            propia = em[mask].copy()
-            for _, r in propia.iterrows():
+            for _, r in er[mask].iterrows():
                 filas_elas.append({
                     "dataset": etq, "metodo": r["metodo"],
                     "alternativa": r["alternativa"],
                     "variable_tiempo": r["covariable"],
-                    "elasticidad_propia_tiempo": r["elasticidad"],
+                    "elasticidad_propia_tiempo": r["elasticidad_media"],
+                    "elasticidad_sd": r["elasticidad_sd"],
+                    "pct_particiones_positiva": r["pct_positiva"],
+                    "n_particiones": r["n_particiones"],
                 })
         else:
             print(f"[{ds}] falta {f.name}")

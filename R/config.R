@@ -43,6 +43,10 @@ ruta_estimaciones <- function(cfg, ds) {
   ruta(cfg, "results", sprintf("estimaciones_%s.csv", ds))
 }
 
+ruta_estimaciones_completa <- function(cfg, ds) {
+  ruta(cfg, "results", sprintf("estimaciones_completa_%s.csv", ds))
+}
+
 #' Aborta si los datos intermedios no existen o son de otra versión del config.
 verificar_datos <- function(cfg, ds) {
   manifest <- ruta(cfg, "processed", "MANIFEST.json")
