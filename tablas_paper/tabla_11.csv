@@ -1,0 +1,40 @@
+Dataset,Parameter,ORIG. beta,ORIG. S.E.,ROS beta,ROS S.D.CV,SMOTE beta,SMOTE S.D.CV,CVAE beta,CVAE S.D.CV,Class-w. beta,Class-w. S.D.CV
+SM-Centro,Car Driver ASC,-5.168,1.052,-3.910,0.796,-4.551,0.754,-2.442,0.817,-3.815,0.642
+SM-Centro,Bus ASC,-1.896,0.586,-1.888,0.431,-2.409,0.439,+0.854,0.334,-1.898,0.357
+SM-Centro,Travel Time,-0.001,0.001,-0.002,0.001,-0.002,0.001,-0.001,0.001,-0.002,0.001
+SM-Centro,Walking Time,-0.001,0.000,-0.001,0.000,-0.001,0.000,+0.001,0.001,-0.001,0.000
+SM-Centro,Waiting Time,-0.006,0.002,-0.003,0.002,-0.005,0.002,+0.008,0.001,-0.003,0.002
+SM-Centro,Travel Cost,-0.001,0.012,+0.012,0.012,+0.011,0.013,-0.018,0.024,+0.011,0.011
+SM-Centro,AUTLIC,+1.248,0.720,+1.378,0.598,+1.183,0.535,+1.590,0.422,+1.314,0.442
+SM-Centro,Monthly Income (CD),+0.148,0.063,+0.204,0.050,+0.171,0.052,+0.326,0.078,+0.197,0.043
+SM-Centro,Monthly Income (Bus),-0.054,0.050,-0.039,0.032,-0.083,0.037,-0.227,0.085,-0.039,0.026
+LC-Centro,Car Driver ASC,-3.903,0.647,-4.334,0.400,-4.652,0.374,-4.150,0.431,-4.284,0.313
+LC-Centro,Car Pass. ASC,-3.452,0.471,-2.685,0.308,-2.930,0.274,-2.220,0.414,-2.672,0.237
+LC-Centro,Bus ASC,-1.666,0.489,-1.878,0.400,-1.982,0.418,-3.237,0.417,-1.871,0.362
+LC-Centro,Travel Time,-0.002,0.001,-0.002,0.000,-0.002,0.001,+0.001,0.001,-0.002,0.000
+LC-Centro,Walking Time,-0.002,0.000,-0.003,0.000,-0.003,0.000,-0.002,0.000,-0.003,0.000
+LC-Centro,Waiting Time,+0.001,0.003,+0.001,0.002,+0.000,0.002,+0.002,0.002,+0.001,0.002
+LC-Centro,Travel Cost,-0.014,0.011,-0.010,0.008,-0.007,0.008,+0.009,0.006,-0.010,0.007
+LC-Centro,SEX (CP),-0.735,0.388,-0.802,0.263,-1.149,0.261,-0.769,0.262,-0.791,0.178
+LC-Centro,AUTLIC,+2.441,0.622,+2.547,0.386,+2.707,0.366,+2.610,0.314,+2.496,0.320
+Swissmetro,Car ASC,+0.274,0.091,-0.024,0.067,+0.249,0.062,-0.273,0.061,-0.018,0.049
+Swissmetro,SM ASC,+0.645,0.044,-0.840,0.038,-1.088,0.038,-0.971,0.052,-0.839,0.029
+Swissmetro,Travel Cost,-0.006,0.000,-0.006,0.000,-0.007,0.000,-0.008,0.000,-0.006,0.000
+Swissmetro,Travel Time,-0.013,0.000,-0.014,0.001,-0.016,0.001,-0.016,0.001,-0.014,0.000
+Swissmetro,Age,+0.189,0.026,+0.108,0.020,+0.009,0.020,+0.173,0.018,+0.107,0.014
+Swissmetro,Luggage,-0.115,0.044,-0.247,0.032,-0.372,0.034,-0.414,0.030,-0.255,0.025
+Swissmetro,GA,+1.668,0.152,+2.113,0.108,+1.736,0.113,+2.583,0.114,+2.116,0.077
+Swissmetro,Seats,-0.091,0.069,-0.458,0.046,+0.449,0.064,-0.418,0.049,-0.460,0.040
+# nota: ORIG.: MLE sobre el dataset completo (03_estimar.R --muestra-completa), S.E. clásico
+# nota: S.D.CV: desviación de beta entre las 50 particiones
+# nota: SM-Centro: b_mi_* por cada 10.000 de ILM (modelo.escalas)
+# fuente: results/corrigendum/estimaciones_completa_sm_centro.csv
+# fuente: results/corrigendum/tabla_coeficientes_sm_centro.csv
+# fuente: results/corrigendum/estimaciones_completa_lc_centro.csv
+# fuente: results/corrigendum/tabla_coeficientes_lc_centro.csv
+# fuente: results/corrigendum/estimaciones_completa_swissmetro.csv
+# fuente: results/corrigendum/tabla_coeficientes_swissmetro.csv
+# git_commit: 0fa7ba8d80c35be257d983b205646184074c8aed
+# manifest_sha256: 9c1b30974244
+# config_hash: 821d5b4010d2
+# generado por: python/scripts/14_tablas_paper.py

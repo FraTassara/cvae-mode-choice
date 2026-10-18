@@ -1,0 +1,18 @@
+Dataset,Travel Mode,Frequency,Share %
+SM-Centro,Car Driver (CD),53,9.30
+SM-Centro,Metro,185,32.46
+SM-Centro,Bus,332,58.25
+LC-Centro,Car Driver (CD),125,31.41
+LC-Centro,Car Passenger (CP),41,10.30
+LC-Centro,Metro,124,31.16
+LC-Centro,Bus,108,27.14
+Swissmetro,Train,"1,414",13.20
+Swissmetro,Swiss-metro,"6,216",58.04
+Swissmetro,Car,"3,080",28.76
+# fuente: data/processed/sm_centro_original.csv
+# fuente: data/processed/lc_centro_original.csv
+# fuente: data/processed/swissmetro_original.csv
+# git_commit: 0fa7ba8d80c35be257d983b205646184074c8aed
+# manifest_sha256: 9c1b30974244
+# config_hash: 821d5b4010d2
+# generado por: python/scripts/14_tablas_paper.py

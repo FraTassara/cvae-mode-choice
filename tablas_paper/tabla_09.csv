@@ -1,0 +1,12 @@
+Method,Own-elasticity of travel time,S.D. across partitions,% partitions positive,N partitions
+Original (no balancing),-0.146,0.076,8,50
+CVAE,-0.088,0.131,30,50
+ROS,-0.143,0.054,2,50
+SMOTE,-0.153,0.070,2,50
+Class-weighting,-0.143,0.055,2,50
+# nota: SM-Centro, alternativa Car Driver (CD), covariable TVIA1: media y SD sobre las particiones (N9)
+# fuente: results/corrigendum/efectos_marginales_resumen_sm_centro.csv
+# git_commit: 0fa7ba8d80c35be257d983b205646184074c8aed
+# manifest_sha256: 9c1b30974244
+# config_hash: 821d5b4010d2
+# generado por: python/scripts/14_tablas_paper.py

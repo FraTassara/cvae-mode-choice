@@ -1,0 +1,11 @@
+Dataset,0.70,0.80,0.90,0.95
+SM-Centro,0.728,0.727,0.727,0.729
+LC-Centro,0.676,0.676,0.675,0.676
+Swissmetro,0.494,0.494,0.494,0.494
+# fuente: results/corrigendum/sensibilidad_elipses_sm_centro.csv
+# fuente: results/corrigendum/sensibilidad_elipses_lc_centro.csv
+# fuente: results/corrigendum/sensibilidad_elipses_swissmetro.csv
+# git_commit: 0fa7ba8d80c35be257d983b205646184074c8aed
+# manifest_sha256: 9c1b30974244
+# config_hash: 821d5b4010d2
+# generado por: python/scripts/14_tablas_paper.py

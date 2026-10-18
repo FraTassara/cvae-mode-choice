@@ -1,0 +1,19 @@
+Dataset,Travel Mode,Real (N),Synthetic (N),Synthetic share %
+SM-Centro,Car Driver (CD),42.4,223.2,84.0
+SM-Centro,Metro,148,117.6,44.3
+SM-Centro,Bus,265.6,0,0.0
+LC-Centro,Car Driver (CD),100,0,0.0
+LC-Centro,Car Passenger (CP),32.8,67.2,67.2
+LC-Centro,Metro,99.2,0.8,0.8
+LC-Centro,Bus,86.4,13.6,13.6
+Swissmetro,Train,"1,131.2","3,841.6",77.3
+Swissmetro,Swiss-metro,"4,972.8",0,0.0
+Swissmetro,Car,"2,464","2,508.8",50.5
+# nota: N = media por fold de entrenamiento (50 particiones); balanceo a la clase mayoritaria dentro de cada fold
+# fuente: results/corrigendum/sobremuestreo_sm_centro.csv
+# fuente: results/corrigendum/sobremuestreo_lc_centro.csv
+# fuente: results/corrigendum/sobremuestreo_swissmetro.csv
+# git_commit: 0fa7ba8d80c35be257d983b205646184074c8aed
+# manifest_sha256: 9c1b30974244
+# config_hash: 821d5b4010d2
+# generado por: python/scripts/14_tablas_paper.py

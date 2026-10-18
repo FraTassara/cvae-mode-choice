@@ -1,0 +1,12 @@
+Dataset,Original (N),Synthetic (N),Ratio
+SM-Centro,456,340.8,0.75
+LC-Centro,318.4,81.6,0.26
+Swissmetro,"8,568","6,350.4",0.74
+# nota: N = media por fold de entrenamiento (50 particiones); balanceo a la clase mayoritaria dentro de cada fold
+# fuente: results/corrigendum/sobremuestreo_sm_centro.csv
+# fuente: results/corrigendum/sobremuestreo_lc_centro.csv
+# fuente: results/corrigendum/sobremuestreo_swissmetro.csv
+# git_commit: 0fa7ba8d80c35be257d983b205646184074c8aed
+# manifest_sha256: 9c1b30974244
+# config_hash: 821d5b4010d2
+# generado por: python/scripts/14_tablas_paper.py

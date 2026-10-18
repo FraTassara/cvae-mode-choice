@@ -402,8 +402,15 @@ elasticidad propia de TVIA **positiva** (0,008–0,021) porque en esa partición
 en media (−0,0010; invertido en el 30 %). Los coeficientes que el CVAE invierte
 de forma exclusiva en SM-Centro son `b_wkt` (96 %) y `b_wt` (100 %). En
 LC-Centro, la elasticidad positiva sí es representativa (`b_ivt` invertido
-en el 90 % de las particiones). Corrección propuesta, que no está aplicada:
-calcular las elasticidades en todas las particiones y reportar media y SD.
+en el 90 % de las particiones). **Corregido en la Fase 2:** `08` estima ahora
+en las 50 particiones (`efectos_marginales_resumen_{ds}.csv`). En SM-Centro,
+la elasticidad propia de TVIA1 (Car Driver) bajo el CVAE es **−0,088 (SD
+0,131)**, positiva en el **30 %** de las particiones. El +0,014 publicado no se
+reproduce. Las demás métricas: original −0,146 (8 %), ROS −0,143 (2 %), SMOTE
+−0,153 (2 %), class-weighting −0,143 (2 %). Las elasticidades propias que el
+CVAE invierte de forma sistemática en SM-Centro son las de caminata (TCAM1,
+positiva en el 96 %) y espera (TESP4 y TESP5, positivas en el 100 %),
+coherentes con `b_wkt` y `b_wt`. Fuente: `tablas_paper/tabla_09.csv`.
 
 **N5. [REVOCADA por §11] La inversión de `b_cost` bajo el CVAE persiste con D3.** Ocurre en el
 100 % de las particiones de CVAE y de `CVAE_conf70/90/95` (media +0,0001,
@@ -583,6 +590,9 @@ omiten aquí; están en el CSV.
    porque ningún método invierte el signo. La cifra es la misma, pero el
    fundamento no: en A, la ausencia de Swissmetro no era evidencia a favor
    del CVAE, porque el modelo estaba mal especificado para todos los métodos.
-   No se puede comprobar cuáles coeficientes de SM y LC cita el paper como
-   invertidos ni con qué argumento, porque falta el PDF (§0, C1). Esa parte
-   queda para la Fase 3.
+   Con el PDF ya disponible: el paper atribuye al CVAE en SM-Centro la
+   inversión de `b_wkt` y `b_ivt`. En las 50 particiones, los coeficientes
+   invertidos son `b_wkt` (96 %) y `b_wt` (100 %); `b_ivt` lo está solo en el
+   30 % (N9). En LC-Centro coincide: `b_ivt` y `b_tcw`. El conteo "dos de
+   tres" se mantiene, pero uno de los coeficientes citados para SM-Centro
+   cambia (detalle en la Fase 3).
