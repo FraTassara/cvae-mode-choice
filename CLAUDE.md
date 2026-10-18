@@ -57,7 +57,10 @@ a folds y datos (`Config._config_de_datos`) e invalida lo generado si cambia.
 
 ## Qué no tocar
 
-- NO modificar la especificación de SM-Centro ni de LC-Centro.
+- NO modificar la especificación de SM-Centro ni de LC-Centro. Excepción ya
+  aplicada (corrigendum, N10, autorizada por la autora): LC-Centro incluye
+  ingreso (`b_mi_cd`, `b_mi_cp`, `b_mi_bus`) con `escalas: {ILM: 1.0e-4}`, como
+  declara la Tabla 4 del paper.
 - La de Swissmetro ya fue corregida (base `asc_train`; `b_age`, `b_luggage`
   en car; `b_ga` en train y sm; `b_seats` en sm) y re-estimada, incluidas
   `CVAE_conf70/90/95`.

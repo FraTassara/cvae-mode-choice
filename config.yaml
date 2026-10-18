@@ -123,15 +123,25 @@ datasets:
 
     modelo:
       asc_fija: asc_metro
+      # Corrigendum (N10): ingreso en CD, CP y Bus, como declara la Tabla 4 del
+      # paper y como se estimó la columna ORIG. publicada (reproducida exacta
+      # con experimental/diagnostico_lc_orig.R). Es corrección a lo declarado,
+      # no re-especificación. HH (jefe de hogar) NO entra: la Tabla 4 lo lista,
+      # pero con HH la columna ORIG. publicada no se reproduce. Escala igual que
+      # SM-Centro: b_mi_* por cada 10.000 de ILM.
+      escalas: {ILM: 1.0e-4}
       alternativas:
         - {id: 1, nombre: car_driver, avail: DISP1,
-           atributos: {b_tcw: CTOT1_w, b_ivt: TVIA1, b_wkt: TCAM1, b_autlic: AUTLIC}}
+           atributos: {b_tcw: CTOT1_w, b_ivt: TVIA1, b_wkt: TCAM1, b_autlic: AUTLIC,
+                       b_mi_cd: ILM}}
         - {id: 2, nombre: car_passenger, avail: DISP2,
-           atributos: {b_tcw: CTOT2_w, b_ivt: TVIA2, b_wkt: TCAM2, b_sex_cp: SEXO}}
+           atributos: {b_tcw: CTOT2_w, b_ivt: TVIA2, b_wkt: TCAM2, b_sex_cp: SEXO,
+                       b_mi_cp: ILM}}
         - {id: 4, nombre: metro, avail: DISP4,
            atributos: {b_tcw: CTOT4_w, b_ivt: TVIA4, b_wkt: TCAM4, b_wt: TESP4}}
         - {id: 5, nombre: bus, avail: DISP5,
-           atributos: {b_tcw: CTOT5_w, b_ivt: TVIA5, b_wkt: TCAM5, b_wt: TESP5}}
+           atributos: {b_tcw: CTOT5_w, b_ivt: TVIA5, b_wkt: TCAM5, b_wt: TESP5,
+                       b_mi_bus: ILM}}
       signos_esperados: {b_ivt: -1, b_wkt: -1, b_wt: -1, b_tcw: -1}
 
     cvae:
@@ -305,11 +315,20 @@ paper:
   # script verifica que los tres coincidan.
   tabla_06_metodo: CVAE
   tabla_07_metodos: [ROS, SMOTE, CVAE]
-  # Tabla 9: elasticidad propia del tiempo del auto en SM-Centro.
-  tabla_09: {dataset: sm_centro, alternativa: 1, coeficiente: b_ivt}
+  # Tabla 9 (corrigendum): elasticidad PROPIA en SM-Centro, media ± SD sobre
+  # las particiones. La espera (Metro, Bus) es la reversión sistemática del
+  # CVAE; el tiempo de viaje del auto se mantiene para documentar que el
+  # +0,014 publicado no es robusto (N9). La covariable sale de la utilidad:
+  # atributo `coeficiente` de la alternativa `alternativa`.
+  tabla_09:
+    dataset: sm_centro
+    columnas:
+      - {etiqueta: "Own-elasticity of waiting time (Metro)", alternativa: 4, coeficiente: b_wt}
+      - {etiqueta: "Own-elasticity of waiting time (Bus)", alternativa: 5, coeficiente: b_wt}
+      - {etiqueta: "Own-elasticity of travel time", alternativa: 1, coeficiente: b_ivt}
   # Tabla 11: parámetro del modelo -> fila del paper, en el orden del paper.
-  # El ASC fijo (modelo.asc_fija) no se reporta. b_mi_* no estaba en la
-  # Tabla 11 publicada pero sí en la especificación (Tabla 4).
+  # El ASC fijo (modelo.asc_fija) no se reporta. b_mi_* (SM y LC) no estaba en
+  # la Tabla 11 publicada pero sí en la especificación (Tabla 4).
   coeficientes:
     sm_centro:
       asc_car_driver: Car Driver ASC
@@ -331,6 +350,9 @@ paper:
       b_tcw: Travel Cost
       b_sex_cp: SEX (CP)
       b_autlic: AUTLIC
+      b_mi_cd: Monthly Income (CD)
+      b_mi_cp: Monthly Income (CP)
+      b_mi_bus: Monthly Income (Bus)
     swissmetro:
       asc_car: Car ASC
       asc_sm: SM ASC
