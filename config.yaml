@@ -14,7 +14,9 @@ proyecto:
     raw:        data/raw
     folds:      data/folds
     processed:  data/processed
-    results:    results
+    # Corrigendum (2026-10): los resultados nuevos van a una carpeta aparte.
+    # Los validados del paper siguen en `results/` (versionados en git).
+    results:    results/corrigendum
     logs:       logs
 
 # ---------------------------------------------------------------------------- #
@@ -57,6 +59,15 @@ datasets:
 
     modelo:
       asc_fija: asc_metro
+      # Reescalado de covariables SOLO en la estimación/predicción del MNL
+      # (R/apollo_modelo.R::aplicar_escalas). ILM sin escalar (media ≈ 42.800)
+      # dejaba el Hessiano mal condicionado: Apollo reportaba "false
+      # convergence" en 16–78 % de los folds. Con 1e-4, ILM se mide en decenas
+      # de miles y b_mi_cd / b_mi_bus son el efecto en la utilidad por cada
+      # 10.000 unidades de ILM (= 1e4 × el coeficiente publicado). Las
+      # utilidades no cambian. No afecta folds, sintéticos ni JSD: el CVAE y
+      # SMOTE siguen viendo ILM en su unidad original.
+      escalas: {ILM: 1.0e-4}
       alternativas:
         - {id: 1, nombre: car_driver, avail: DISP1,
            atributos: {b_tcw: CTOT1_w, b_ivt: TVIA1, b_wkt: TCAM1,
@@ -208,24 +219,48 @@ datasets:
     # Aquí el filtro es explícito y lo aplican AMBOS lados.
     filtros:
       - "AGE != 6"
+    # D3 (corrigendum): el CSV crudo no trae CAR_AV. El auto no está
+    # disponible en 1.674 filas, codificadas como CAR_TT = CAR_CO = 0 (igual
+    # que Biogeme con CAR_AV = 0; en los reales ambos ceros coinciden siempre).
+    # 01_folds.py agrega la columna a {ds}_original.csv. No quita filas
+    # (N = 10.710).
+    derivadas:
+      CAR_AV: "CAR_TT > 0"
+      # G1 (corrigendum): en el crudo, TRAIN_CO y SM_CO de quien tiene abono
+      # anual (GA = 1) son el PRECIO DEL ABONO (1.286–5.040 CHF), no el costo
+      # marginal del viaje, que para él es 0. Convención de Biogeme:
+      # costo = CO * (GA == 0). El modelo usa estas columnas y no las crudas.
+      TRAIN_COST: "TRAIN_CO * (GA == 0)"
+      SM_COST: "SM_CO * (GA == 0)"
+    # En las filas SINTÉTICAS cada variable con `depende` es binaria y está
+    # acoplada a sus ceros estructurales: si CAR_AV = 0, CAR_TT = CAR_CO = 0;
+    # si GA = 1, TRAIN_COST = SM_COST = 0 (`anula_si: 1`).
+    # El CVAE ya lo hace (propagate_structural_zeros) y ROS copia filas; con
+    # esta bandera SMOTE redondea la variable interpolada y propaga los ceros,
+    # y 02_sinteticos.py ABORTA si algún
+    # método deja una fila sin acoplar.
+    acoplar_disponibilidad: true
 
     modelo:
       asc_fija: asc_train
       alternativas:
         - { id: 1, nombre: train, avail: null,
-            atributos: { b_time: TRAIN_TT, b_cost: TRAIN_CO, b_ga: GA } }
+            atributos: { b_time: TRAIN_TT, b_cost: TRAIN_COST, b_ga: GA } }
         - { id: 2, nombre: sm,    avail: null,
-            atributos: { b_time: SM_TT, b_cost: SM_CO, b_ga: GA, b_seats: SM_SEATS } }
-        - { id: 3, nombre: car,   avail: null,
+            atributos: { b_time: SM_TT, b_cost: SM_COST, b_ga: GA, b_seats: SM_SEATS } }
+        - { id: 3, nombre: car,   avail: CAR_AV,
             atributos: { b_time: CAR_TT, b_cost: CAR_CO, b_age: AGE, b_luggage: LUGGAGE } }
       signos_esperados: { b_time: -1, b_cost: -1 }
 
     cvae:
-      excluir: [ID]
+      # TRAIN_CO y SM_CO crudos quedan fuera del CVAE (el MNL usa *_COST);
+      # se remuestrean de la empírica por modo, como el resto de `excluir`.
+      excluir: [ID, TRAIN_CO, SM_CO]
       variables:
+        CAR_AV:  {tipo: availability, depende: [CAR_TT, CAR_CO]}
         AGE: empirical
         LUGGAGE: empirical
-        GA: binary
+        GA: {tipo: binary, depende: [TRAIN_COST, SM_COST], anula_si: 1}
         SM_SEATS: binary
       arquitectura:
         n_z: 2

@@ -28,6 +28,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -132,18 +133,33 @@ def main() -> None:
         f = res / f"jsd_{ds}.csv"
         if f.exists():
             j = pd.read_csv(f)
-            bench_cols = [c for c in j.columns if c.startswith("benchmark_p95_modo_")]
-            ref = j[bench_cols].stack().mean() if bench_cols else float("nan")
-            if "jsd_modo_medio" in j.columns and "metodo" in j.columns:
-                for metodo, g in j.groupby("metodo"):
-                    filas_jsd.append({
-                        "dataset": etq, "metodo": metodo,
-                        "jsd_sintetico_medio": g["jsd_modo_medio"].mean(),
-                        "jsd_benchmark_ref_p95": ref,
-                        "vars_sobre_benchmark": int(g.get(
-                            "supera_benchmark",
-                            pd.Series(dtype=bool)).sum()),
-                    })
+            # Misma prueba que 06_diagnosticos.py: cada JSD (variable, modo)
+            # contra el p95 del benchmark de ESA variable en ESE modo. No se
+            # compara un promedio de JSD con un promedio de p95: una variable
+            # con p95 alto compensaría a otra con p95 bajo.
+            modos = [c[len("benchmark_p95_modo_"):] for c in j.columns
+                     if c.startswith("benchmark_p95_modo_")]
+            for metodo, g in j.groupby("metodo"):
+                jsd = g[[f"jsd_modo_{m}" for m in modos]].to_numpy(float)
+                p95 = g[[f"benchmark_p95_modo_{m}" for m in modos]].to_numpy(float)
+                ok = np.isfinite(jsd) & np.isfinite(p95)
+                jsd, p95 = jsd[ok], p95[ok]
+                # p95 = 0 ocurre cuando la variable es constante en ese modo.
+                cociente = np.where(p95 > 0, jsd / np.where(p95 > 0, p95, 1.0),
+                                    np.where(jsd > 0, np.inf, 0.0))
+                filas_jsd.append({
+                    "dataset": etq, "metodo": metodo,
+                    "n_vars": int(g["variable"].nunique()),
+                    "vars_sobre_benchmark": int(g["supera_benchmark"].sum()),
+                    "n_pares_var_modo": int(ok.sum()),
+                    "pares_sobre_p95": int((jsd > p95).sum()),
+                    "cociente_jsd_p95_mediana":
+                        float(np.median(cociente)) if cociente.size else np.nan,
+                    "jsd_sintetico_medio":
+                        float(np.mean(jsd)) if jsd.size else np.nan,
+                    "jsd_benchmark_p95_medio":
+                        float(np.mean(p95)) if p95.size else np.nan,
+                })
         else:
             print(f"[{ds}] falta {f.name} (corre 06_diagnosticos.py)")
 

@@ -24,6 +24,10 @@ from pathlib import Path
 
 import pandas as pd
 
+# La consola de Windows (cp1252) no codifica "−" y el script abortaba al
+# imprimir con la salida redirigida a un archivo.
+sys.stdout.reconfigure(encoding="utf-8")
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cvae import diagnostics  # noqa: E402
 from cvae.config_repo import cargar  # noqa: E402
@@ -63,8 +67,14 @@ def main() -> None:
     choice = d["choice_col"]
 
     original = pd.read_csv(cfg.ruta_original(ds))
-    ignorar = {"row_id", "repeticion", "fold", "is_synthetic"}
+    # Solo se evalúan las variables que el método GENERA: fuera el
+    # identificador y las columnas de `cvae.excluir` (no están en el modelo).
+    # Antes entraban ID, HTS, JEFH y atributos de modos ajenos a la
+    # especificación, e inflaban `vars_sobre_benchmark`.
+    ignorar = ({"row_id", "repeticion", "fold", "is_synthetic", d["id_col"]}
+               | set(d.get("cvae", {}).get("excluir", [])))
     cols_datos = [c for c in original.columns if c not in ignorar]
+    print(f"  {len(cols_datos) - 1} variables evaluadas (sin {choice})")
 
     # ------------------------------------------------------------------ #
     #  §2.5 — Benchmark interno: JSD entre dos mitades de los datos reales.
@@ -128,8 +138,8 @@ def main() -> None:
         j.insert(0, "metodo", metodo)
         jsd_todos.append(j.reset_index())
 
-        # --- §2.6 Ratio de sobremuestreo -------------------------------
-        r = diagnostics.oversampling_report(original, synth_0, choice, metodo)
+        # --- §2.6 Ratio de sobremuestreo, POR FOLD (todas las particiones)
+        r = diagnostics.oversampling_por_fold(train, choice, metodo)
         ratios_todos.append(r.reset_index())
 
         # --- §2.3(b) Gaps de atributos ---------------------------------
@@ -166,6 +176,7 @@ def main() -> None:
 
     jsd_tab["jsd_modo_medio"] = jsd_tab[cols_modo].mean(axis=1) if cols_modo else float("nan")
     jsd_tab["supera_benchmark"] = excesos.any(axis=1) if len(excesos.columns) else False
+    jsd_tab["n_vars_evaluadas"] = jsd_tab.groupby("metodo")["variable"].transform("nunique")
     jsd_tab["n_modos_sobre_benchmark"] = (excesos.sum(axis=1)
                                           if len(excesos.columns) else 0)
     jsd_tab.round(5).to_csv(res / f"jsd_{ds}.csv", index=False)

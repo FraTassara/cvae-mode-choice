@@ -41,6 +41,7 @@ def _schema_desde_yaml(bloque: Dict[str, Any] | None,
             specs[col] = VarSpec(
                 kind=VarKind(valor["tipo"]),
                 dependent_cols=valor.get("depende", ()),
+                zero_when=int(valor.get("anula_si", 0)),
                 integer=valor.get("entero", False),
                 non_negative=valor.get("no_negativo", True),
             )

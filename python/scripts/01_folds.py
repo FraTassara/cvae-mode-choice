@@ -45,6 +45,20 @@ def normalizar(cfg, ds: str) -> pd.DataFrame:
     choice = d["choice_col"]
     df = df[df[choice].isin(d["clases"])]
 
+    # Columnas derivadas declaradas en config.yaml (p. ej. CAR_AV en
+    # Swissmetro). Se calculan después de filtrar y quedan en
+    # {ds}_original.csv, así Python y R ven la misma columna.
+    for nombre, expr in (d.get("derivadas") or {}).items():
+        if nombre in df.columns:
+            raise SystemExit(f"[{ds}] la derivada '{nombre}' ya existe en el crudo.")
+        df[nombre] = df.eval(expr).astype(int)
+        v = df[nombre]
+        if v.isin([0, 1]).all():
+            resumen = f"{int(v.sum())}/{len(df)} filas con valor 1"
+        else:
+            resumen = f"media {v.mean():.1f}, {int((v == 0).sum())}/{len(df)} filas en 0"
+        print(f"    derivada {nombre} = {expr}: {resumen}")
+
     df = df.reset_index(drop=True)
     df.insert(0, "row_id", range(len(df)))
     return df

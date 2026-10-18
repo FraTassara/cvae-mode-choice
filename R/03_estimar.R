@@ -139,6 +139,7 @@ tabla <- do.call(rbind, lapply(resultados, function(r) {
 }))
 
 destino <- ruta_estimaciones(cfg, args$dataset)
+dir.create(dirname(destino), recursive = TRUE, showWarnings = FALSE)
 
 # Acumular en vez de sobrescribir: estimar un método nuevo (class_weights,
 # CVAE_conf90, ...) no debe borrar los ya calculados. Se reemplazan solo las

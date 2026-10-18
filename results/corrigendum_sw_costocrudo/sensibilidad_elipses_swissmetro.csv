@@ -1,0 +1,5 @@
+confianza,accuracy_media,accuracy_sd,f1_macro_media,f1_macro_sd,loglik_media_media,loglik_media_sd,prob_media_observada_media,prob_media_observada_sd,n_particiones,n_no_convergidas,n_descartadas
+0.7,0.486,0.0084,0.4665,0.0086,-0.9815,0.0154,0.4212,0.0035,50,0,0
+0.8,0.4859,0.0085,0.4664,0.0087,-0.9814,0.0154,0.4213,0.0035,50,0,0
+0.9,0.4859,0.0086,0.4664,0.0089,-0.9815,0.0154,0.4213,0.0035,50,0,0
+0.95,0.4858,0.0084,0.4664,0.0086,-0.9815,0.0154,0.4213,0.0035,50,0,0

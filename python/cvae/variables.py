@@ -38,8 +38,11 @@ MODELED = {VarKind.CONTINUOUS, VarKind.ZERO_INFLATED}
 @dataclass
 class VarSpec:
     kind: VarKind = VarKind.CONTINUOUS
-    #: Solo para AVAILABILITY: columnas que se ponen a 0 si esta vale 0.
+    #: Ceros estructurales: columnas que se ponen a 0 cuando esta variable
+    #: vale `zero_when`. AVAILABILITY usa 0 (modo no disponible); un BINARY
+    #: puede usar 1 (p. ej. GA = 1 anula el costo del tren).
     dependent_cols: Sequence[str] = ()
+    zero_when: int = 0
     #: Solo para CONTINUOUS/ZERO_INFLATED: redondear a entero al generar.
     integer: bool = False
     #: Recortar a >= 0 al revertir (tiempos y costos no pueden ser negativos).
@@ -68,6 +71,10 @@ class VariableSchema:
 
     def availability_cols(self, columns: Sequence[str]) -> List[str]:
         return [c for c in columns if self.kind(c) == VarKind.AVAILABILITY]
+
+    def structural_cols(self, columns: Sequence[str]) -> List[str]:
+        """Columnas que declaran ceros estructurales (`dependent_cols`)."""
+        return [c for c in columns if self.spec(c).dependent_cols]
 
     # ------------------------------------------------------------------ #
     #  Transformaciones previas al escalado
@@ -147,12 +154,16 @@ class ConditionalSampler:
         Si la disponibilidad de un modo es 0, sus atributos (tiempo, costo,
         espera de ese modo) se fuerzan a 0. Sin esto el CSV sintético contiene
         tiempos de viaje positivos para modos declarados no disponibles.
+        Igual para cualquier variable con `dependent_cols`, según su
+        `zero_when` (GA = 1 -> costo de tren y Swissmetro en 0).
         """
         out = df.copy()
-        for col in self.schema.availability_cols(out.columns):
-            deps = [c for c in self.schema.spec(col).dependent_cols if c in out.columns]
+        for col in self.schema.structural_cols(out.columns):
+            spec = self.schema.spec(col)
+            deps = [c for c in spec.dependent_cols if c in out.columns]
             if not deps:
                 continue
-            mask = out[col].to_numpy() < 0.5
+            activa = out[col].to_numpy() >= 0.5
+            mask = activa if spec.zero_when == 1 else ~activa
             out.loc[mask, deps] = 0.0
         return out

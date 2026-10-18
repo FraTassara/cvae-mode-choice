@@ -29,6 +29,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cvae.config_repo import cargar  # noqa: E402
+from cvae.convergencia import aplicar_politica  # noqa: E402
 
 # El 0.80 corresponde al método 'CVAE' a secas (el nivel por defecto del config).
 NIVELES = {"CVAE": 0.80, "CVAE_conf70": 0.70,
@@ -47,9 +48,7 @@ def main() -> None:
     if not origen.exists():
         raise SystemExit(f"Falta {origen}. Estima primero los niveles.")
 
-    df = pd.read_csv(origen)
-    if "convergio" in df:
-        df = df[df.convergio.astype(bool)]
+    df, conteo = aplicar_politica(pd.read_csv(origen))
 
     presentes = [m for m in NIVELES if m in set(df.metodo)]
     faltan = [m for m in NIVELES if m not in presentes]
@@ -70,7 +69,9 @@ def main() -> None:
              .sort_index())
     tabla.columns = [f"{c}_{'media' if s == 'mean' else 'sd'}"
                      for c, s in tabla.columns]
-    tabla = tabla.round(4)
+    n = conteo.loc[presentes].copy()
+    n.index = pd.Index([NIVELES[m] for m in presentes], name="confianza")
+    tabla = tabla.round(4).join(n)
 
     destino = cfg.rutas.results / f"sensibilidad_elipses_{args.dataset}.csv"
     tabla.to_csv(destino)

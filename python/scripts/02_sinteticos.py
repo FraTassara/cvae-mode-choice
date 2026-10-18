@@ -75,7 +75,64 @@ def m_smote(train, cfg, ds, semilla):
     Xr, yr = SMOTE(random_state=semilla).fit_resample(X, y)
     nuevo = pd.concat([Xr, yr.rename(choice)], axis=1).iloc[len(train):]
     nuevo["row_id"] = -1
+    if cfg.dataset(ds).get("acoplar_disponibilidad"):
+        nuevo = _acoplar_disponibilidad(nuevo, cfg, ds)
     return nuevo.reset_index(drop=True)
+
+
+def _ceros_estructurales(cfg, ds) -> dict:
+    """
+    {columna: (dependientes, valor que las anula)} leído de `cvae.variables`:
+    toda variable con `depende` (disponibilidades con anula_si = 0 por
+    defecto; p. ej. GA con anula_si = 1). Es la misma información que usa
+    VariableSchema.propagate_structural_zeros() en el CVAE.
+    """
+    variables = (cfg.dataset(ds).get("cvae") or {}).get("variables") or {}
+    return {col: (list(spec["depende"]), int(spec.get("anula_si", 0)))
+            for col, spec in variables.items()
+            if isinstance(spec, dict) and spec.get("depende")}
+
+
+def _acoplar_disponibilidad(sint: pd.DataFrame, cfg, ds) -> pd.DataFrame:
+    """
+    SMOTE interpola también las variables que anulan a otras: entre un vecino
+    con 0 y otro con 1 sale un valor fraccionario, con atributos interpolados
+    > 0. Se redondea al progenitor más cercano (>= 0.5 -> 1) y, si queda en
+    el valor que anula, sus dependientes se ponen en 0.
+    """
+    out = sint.copy()
+    for col, (deps, anula_si) in _ceros_estructurales(cfg, ds).items():
+        if col not in out:
+            continue
+        out[col] = (out[col] >= 0.5).astype(int)
+        deps = [c for c in deps if c in out]
+        out.loc[out[col] == anula_si, deps] = 0
+    return out
+
+
+def _verificar_disponibilidad(sint: pd.DataFrame, cfg, ds, metodo) -> None:
+    """
+    Comprueba en las filas sintéticas que cada variable con `depende` sea 0/1
+    y que, cuando vale `anula_si`, sus dependientes estén en 0. Si el dataset
+    declara `acoplar_disponibilidad`, un fallo aborta; si no, solo avisa
+    (SM-Centro y LC-Centro: SMOTE interpola DISP*, defecto documentado).
+    """
+    if sint.empty:
+        return
+    for col, (deps, anula_si) in _ceros_estructurales(cfg, ds).items():
+        if col not in sint:
+            continue
+        deps = [c for c in deps if c in sint]
+        no_binaria = int((~sint[col].isin([0, 1])).sum())
+        activa = (sint[col] >= 0.5) if anula_si == 1 else (sint[col] < 0.5)
+        sin_acoplar = int((activa & (sint[deps] != 0).any(axis=1)).sum()) if deps else 0
+        if no_binaria or sin_acoplar:
+            msg = (f"[{ds} / {metodo}] {col}: {no_binaria} filas sintéticas no "
+                   f"binarias y {sin_acoplar} con {col} = {anula_si} pero "
+                   f"{deps} != 0")
+            if cfg.dataset(ds).get("acoplar_disponibilidad"):
+                raise SystemExit("ERROR " + msg)
+            print("    AVISO " + msg)
 
 
 def m_class_weights(train, cfg, ds, semilla):
@@ -144,6 +201,7 @@ def procesar(cfg, ds: str, metodo: str, confianza: float | None = None,
         semilla = int(cfg.semillas["oversampling"] * 10_000 + rep * 100 + fold)
 
         sint = fn(train, cfg, ds, semilla)
+        _verificar_disponibilidad(sint, cfg, ds, metodo)
 
         train = train.assign(is_synthetic=0)
         if len(sint):

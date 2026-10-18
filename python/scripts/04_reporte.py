@@ -22,6 +22,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cvae.config_repo import cargar  # noqa: E402
+from cvae.convergencia import aplicar_politica  # noqa: E402
 
 METRICAS = [
     "accuracy", "f1_macro", "loglik_media", "prob_media_observada",
@@ -29,17 +30,17 @@ METRICAS = [
 ]
 
 
-def tabla_predictiva(df: pd.DataFrame) -> pd.DataFrame:
+def tabla_predictiva(df: pd.DataFrame, conteo: pd.DataFrame) -> pd.DataFrame:
     """Media y desviación ENTRE particiones para cada métrica."""
     cols = [c for c in METRICAS if c in df.columns]
     cols += [c for c in df.columns if c.startswith(("f1_", "recall_", "precision_"))
              and c != "f1_macro"]
     agg = df.groupby("metodo")[cols].agg(["mean", "std"])
     agg.columns = [f"{c}_{'media' if s == 'mean' else 'sd'}" for c, s in agg.columns]
-    return agg.round(4)
+    return agg.round(4).join(conteo)
 
 
-def tabla_coeficientes(df: pd.DataFrame) -> pd.DataFrame:
+def tabla_coeficientes(df: pd.DataFrame, conteo: pd.DataFrame) -> pd.DataFrame:
     """
     Media del coeficiente, S.D. entre particiones y S.E. promedio del estimador.
 
@@ -62,6 +63,7 @@ def tabla_coeficientes(df: pd.DataFrame) -> pd.DataFrame:
                 "sd_entre_particiones": v.std(),
                 "se_promedio_estimador": g[se_col].mean() if se_col in g else np.nan,
                 "n_particiones": len(v),
+                "n_no_convergidas": int(conteo.loc[metodo, "n_no_convergidas"]),
             })
     return pd.DataFrame(filas).round(6)
 
@@ -94,23 +96,20 @@ def main() -> None:
     args = ap.parse_args()
 
     cfg = cargar()
+    cfg.rutas.crear()
     origen = cfg.ruta_estimaciones(args.dataset)
     if not origen.exists():
         raise SystemExit(f"Falta {origen}. Corre `make estimar` primero.")
 
-    df = pd.read_csv(origen)
-    if "convergio" in df:
-        n_malos = int((~df.convergio.astype(bool)).sum())
-        if n_malos:
-            print(f"AVISO: {n_malos}/{len(df)} estimaciones no convergieron; "
-                  "se excluyen de las tablas.")
-            df = df[df.convergio.astype(bool)]
+    df, conteo = aplicar_politica(pd.read_csv(origen))
+    print("--- particiones por método (política: se incluyen todas) ---")
+    print(conteo.to_string())
 
     esperados = cfg.dataset(args.dataset)["modelo"].get("signos_esperados", {}) or {}
 
     salidas = {
-        "tabla_predictiva": tabla_predictiva(df),
-        "tabla_coeficientes": tabla_coeficientes(df),
+        "tabla_predictiva": tabla_predictiva(df, conteo),
+        "tabla_coeficientes": tabla_coeficientes(df, conteo),
         "tabla_signos": tabla_signos(df, esperados),
     }
 

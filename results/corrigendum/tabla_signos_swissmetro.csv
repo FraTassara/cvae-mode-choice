@@ -1,0 +1,17 @@
+metodo,coeficiente,signo_esperado,media,pct_particiones_invertido,invertido_en_media
+CVAE,b_time,-1,-0.0159,0.0,False
+CVAE,b_cost,-1,-0.0084,0.0,False
+CVAE_conf70,b_time,-1,-0.0159,0.0,False
+CVAE_conf70,b_cost,-1,-0.0084,0.0,False
+CVAE_conf90,b_time,-1,-0.0159,0.0,False
+CVAE_conf90,b_cost,-1,-0.0084,0.0,False
+CVAE_conf95,b_time,-1,-0.0159,0.0,False
+CVAE_conf95,b_cost,-1,-0.0084,0.0,False
+ROS,b_time,-1,-0.0138,0.0,False
+ROS,b_cost,-1,-0.006,0.0,False
+SMOTE,b_time,-1,-0.0157,0.0,False
+SMOTE,b_cost,-1,-0.0066,0.0,False
+class_weights,b_time,-1,-0.0139,0.0,False
+class_weights,b_cost,-1,-0.0061,0.0,False
+original,b_time,-1,-0.013,0.0,False
+original,b_cost,-1,-0.0065,0.0,False

@@ -25,6 +25,26 @@ construir_beta_inicial <- function(spec) {
   c(ascs, betas)
 }
 
+#' Reescala covariables según `spec$escalas` (bloque `modelo` de config.yaml).
+#'
+#' Multiplica cada columna listada por su factor. Las utilidades se escriben
+#' igual (`b_mi_cd * ILM`): lo que cambia es la unidad de la covariable y, con
+#' ella, la del coeficiente. Se llama dentro de estimar_mnl() y predecir(),
+#' así 03_estimar.R y 08_efectos_marginales.R lo heredan sin repetirlo.
+aplicar_escalas <- function(datos, spec) {
+  escalas <- spec$escalas
+  if (is.null(escalas) || length(escalas) == 0) return(datos)
+  faltan <- setdiff(names(escalas), names(datos))
+  if (length(faltan) > 0) {
+    stop("modelo$escalas menciona columnas que no están en los datos: ",
+         paste(faltan, collapse = ", "), call. = FALSE)
+  }
+  for (col in names(escalas)) {
+    datos[[col]] <- datos[[col]] * as.numeric(escalas[[col]])
+  }
+  datos
+}
+
 #' Genera la función apollo_probabilities para un dataset.
 #'
 #' Se construye por metaprogramación a partir de la config, en vez de escribir
@@ -87,6 +107,8 @@ estimar_mnl <- function(datos, spec, choice_col, nombre_modelo,
 
   apollo_initialise()
 
+  datos <- aplicar_escalas(datos, spec)
+
   apollo_control <- list(
     modelName       = nombre_modelo,
     modelDescr      = nombre_modelo,
@@ -138,6 +160,8 @@ estimar_mnl <- function(datos, spec, choice_col, nombre_modelo,
 #' desincronizarse de apollo_probabilities sin dar ningún error.
 predecir <- function(ajuste, datos_nuevos, spec, choice_col) {
 
+  # Misma unidad que en la estimación.
+  datos_nuevos <- aplicar_escalas(datos_nuevos, spec)
   database <<- datos_nuevos
 
   # La ponderación es un asunto de ESTIMACIÓN, no de predicción: el conjunto

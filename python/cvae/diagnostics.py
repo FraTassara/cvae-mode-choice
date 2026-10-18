@@ -5,7 +5,10 @@
   jsd_internal_benchmark()  JSD entre dos mitades aleatorias de los datos reales.
                          Es la escala de referencia: un JSD sintético cercano a
                          este valor es indistinguible de la variabilidad muestral.
-  oversampling_report()  nº de muestras por clase y ratio sintético/original.
+  oversampling_report()  nº de muestras por clase y ratio sintético/original
+                         (mezcla un fold con la muestra completa; para la
+                         tabla del paper usar oversampling_por_fold()).
+  oversampling_por_fold() reales y sintéticos por clase dentro de cada fold.
   attribute_gaps()       §2.3(b): diferencias de atributos elegido - no elegido.
 """
 
@@ -111,6 +114,42 @@ def oversampling_report(real: pd.DataFrame, synth: pd.DataFrame,
         }
     )
     tab.index.name = target_col
+    return tab
+
+
+def oversampling_por_fold(train: pd.DataFrame, target_col: str,
+                          method: str) -> pd.DataFrame:
+    """
+    §2.6 — Reales y sintéticos por clase DENTRO de cada partición, promediados
+    sobre todas las particiones de `{ds}_{metodo}_train.csv.gz`.
+
+    Numerador y denominador salen del mismo fold. `oversampling_report()`
+    dividía los sintéticos de UNA partición por los reales de la muestra
+    COMPLETA (SM-Centro, car driver: 222 / (222 + 53) = 81 %), cuando dentro
+    del fold son 223 / (223 + 42) = 84 %.
+    """
+    c = (train.groupby(["repeticion", "fold", target_col, "is_synthetic"])
+              .size().unstack("is_synthetic", fill_value=0)
+              .reindex(columns=[0, 1], fill_value=0))
+    c.columns = ["n_real", "n_sintetico"]
+    c["n_final"] = c["n_real"] + c["n_sintetico"]
+    c["frac_sintetica"] = c["n_sintetico"] / c["n_final"]
+    por_fold = c.groupby(level=["repeticion", "fold"])
+    c["share_real"] = c["n_real"] / por_fold["n_real"].transform("sum")
+    c["share_final"] = c["n_final"] / por_fold["n_final"].transform("sum")
+
+    tab = c.groupby(level=target_col).agg(
+        n_real_media=("n_real", "mean"),
+        n_sintetico_media=("n_sintetico", "mean"),
+        n_final_media=("n_final", "mean"),
+        frac_sintetica_media=("frac_sintetica", "mean"),
+        frac_sintetica_min=("frac_sintetica", "min"),
+        frac_sintetica_max=("frac_sintetica", "max"),
+        share_real_media=("share_real", "mean"),
+        share_final_media=("share_final", "mean"),
+    )
+    tab.insert(0, "metodo", method)
+    tab["n_particiones"] = por_fold.ngroups
     return tab
 
 

@@ -120,6 +120,7 @@ if (length(resultados) == 0) stop("No se pudo estimar ningún modelo.", call. = 
 
 tabla <- do.call(rbind, resultados)
 destino <- ruta(cfg, "results", sprintf("efectos_marginales_%s.csv", args$dataset))
+dir.create(dirname(destino), recursive = TRUE, showWarnings = FALSE)
 write.csv(tabla, destino, row.names = FALSE)
 
 message("\n", nrow(tabla), " filas -> ", destino)

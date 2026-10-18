@@ -102,7 +102,7 @@ class Config:
             "datasets": {
                 nombre: {k: v for k, v in bloque.items()
                          if k in ("archivo", "sep", "id_col", "choice_col",
-                                  "clases", "filtros")}
+                                  "clases", "filtros", "derivadas")}
                 for nombre, bloque in self.d["datasets"].items()
             },
         }
@@ -121,13 +121,31 @@ class Config:
         import platform
         import sys
 
+        destino = self.rutas.processed / "MANIFEST.json"
+
+        # Fusionar con el manifiesto previo: correr 01_folds.py para UN
+        # dataset no debe borrar la constancia de los demás. Si el config
+        # cambió, lo previo es de otra versión y se descarta.
+        previo: Dict[str, Any] = {}
+        if destino.exists():
+            try:
+                previo = json.loads(destino.read_text())
+            except json.JSONDecodeError:
+                previo = {}
+        if previo.get("config_hash") != self.hash():
+            previo = {}
+        extra = dict(extra or {})
+        for k, v in extra.items():
+            if isinstance(v, dict) and isinstance(previo.get(k), dict):
+                extra[k] = {**previo[k], **v}
+
         m = {
+            **previo,
             "config_hash": self.hash(),
             "python": sys.version.split()[0],
             "plataforma": platform.platform(),
-            **(extra or {}),
+            **extra,
         }
-        destino = self.rutas.processed / "MANIFEST.json"
         destino.write_text(json.dumps(m, indent=2, ensure_ascii=False))
         return destino
 
