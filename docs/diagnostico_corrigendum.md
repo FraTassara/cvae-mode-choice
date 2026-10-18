@@ -412,6 +412,36 @@ CVAE invierte de forma sistemática en SM-Centro son las de caminata (TCAM1,
 positiva en el 96 %) y espera (TESP4 y TESP5, positivas en el 100 %),
 coherentes con `b_wkt` y `b_wt`. Fuente: `tablas_paper/tabla_09.csv`.
 
+**N10. La columna ORIG. de LC-Centro en la Tabla 11 usa otra
+especificación, `especificacion`.** La reconciliación marcó primero 14 celdas
+como `genuina` y luego como `pendiente_diagnostico`: la especificación de LC
+no cambió en el corrigendum, así que una columna entera distinta apuntaba a
+otra muestra u otra especificación. Diagnóstico, en orden:
+
+1. *¿N = 398?* Sí. La Tabla 2 del paper suma 125 + 41 + 124 + 108 = 398, igual
+   que el pipeline. El crudo tiene 444 filas, con 46 del modo 3 que
+   `clases: [1, 2, 4, 5]` excluye. Estimar con N = 444 y el modo 3 no reproduce
+   la columna (distancia media a lo publicado 0,348; con ingreso, 0,203).
+2. *¿Ingreso?* Sí, exacto. Con `b_mi_cd`, `b_mi_cp` y `b_mi_bus` (ingreso en
+   Car Driver, Car Passenger y Bus, como dice la Tabla 4) se reproducen los 9
+   coeficientes publicados al tercer decimal y 17 de 18 S.E.; el S.E. de
+   `b_wkt` difiere por redondeo. Agregar también jefe de hogar en CP empeora
+   el ajuste (0,024). La diferencia de costo (−0,003 publicado frente a
+   −0,014) se explica porque el ingreso absorbe parte del efecto de
+   `CTOT_w`; no hace falta otra definición de `CTOT_w`.
+3. *¿Scripts antiguos en git?* No. `git log --all --diff-filter=D -- '*.R'`
+   no devuelve nada: los 13 `.R` que reemplazó `03_estimar.R` nunca
+   estuvieron en este repositorio, y la especificación de LC en `config.yaml`
+   es idéntica en todos los commits.
+
+Evidencia: `experimental/diagnostico_lc_orig.R` → `docs/diagnostico_lc_orig.csv`.
+
+**Consecuencia: el paper es internamente inconsistente en LC-Centro.** La
+Tabla 4 y la columna ORIG. de la Tabla 11 incluyen el ingreso. Las Tablas 8 y
+10, que el pipeline reproduce exactas, se estimaron sin él. La decisión
+(corregir la Tabla 4, o re-estimar LC con ingreso, que rompe el invariante
+"no modificar la spec de LC") es de la autora.
+
 **N5. [REVOCADA por §11] La inversión de `b_cost` bajo el CVAE persiste con D3.** Ocurre en el
 100 % de las particiones de CVAE y de `CVAE_conf70/90/95` (media +0,0001,
 |t| medio 3,05) y en el 0 % de los demás métodos. Queda descartada la
