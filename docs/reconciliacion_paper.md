@@ -1,11 +1,18 @@
 # Reconciliación del paper publicado con el pipeline corregido
 
-**Fuente de cada celda:** `docs/reconciliacion_paper.csv` (349 celdas). Lo genera
+**Fuente de cada celda:** `docs/reconciliacion_paper.csv` (353 celdas). Lo genera
 `python/scripts/15_reconciliacion.py` a partir de `docs/valores_paper.csv`
 (valores transcritos de `docs/Paper_Aceptado_TRR_CVAE.pdf`, con su página) y de
-`tablas_paper/` (commit `0fa7ba8`, `config_hash` `821d5b4010d2`). El detalle
-técnico de cada causa está en `docs/diagnostico_corrigendum.md` (notas N1–N9,
-§§ 2, 6, 10 y 11).
+`tablas_paper/` (pie: commit de origen `3fdbd87`, `config_hash` `821d5b4010d2`).
+El detalle técnico de cada causa está en `docs/diagnostico_corrigendum.md`
+(notas N1–N10 y N13, §§ 2, 6, 10 y 11).
+
+Especificaciones usadas en el corrigendum:
+
+- **SM-Centro:** la publicada, con ingreso reescalado (por cada 10.000 de ILM).
+- **LC-Centro:** la de la Tabla 4 del paper, con ingreso en CD, CP y Bus y sin
+  jefe de hogar (N10). Es una corrección a lo declarado.
+- **Swissmetro:** re-especificado con D3 y G1 (§10).
 
 ## Resumen por estado
 
@@ -14,27 +21,27 @@ técnico de cada causa está en `docs/diagnostico_corrigendum.md` (notas N1–N9
 | 2 | 18 | 2 | — | — | — | 20 |
 | 6 | 1 | — | — | — | 8 | 9 |
 | 7 | 2 | — | 6 | 1 | — | 9 |
-| 8 | 15 | — | 15 | 15 | — | 45 |
+| 8 | — | — | 30 | 15 | — | 45 |
 | 9 | — | — | 5 | — | — | 5 |
-| 10 | 4 | — | 4 | 4 | — | 12 |
-| 11 | 53 | 2 | 98 | 87 | — | 240 |
-| texto | 3 | — | 4 | — | 2 | 9 |
-| **total** | **96** | **4** | **132** | **107** | **10** | **349** |
+| 10 | — | — | 8 | 4 | — | 12 |
+| 11 | 67 | 3 | 97 | 73 | — | 240 |
+| texto | 3 | — | 6 | 2 | 2 | 13 |
+| **total** | **91** | **5** | **152** | **95** | **10** | **353** |
 
-**No queda ninguna celda `genuina`.** Las 14 celdas de la columna ORIG. de
-LC-Centro que no coincidían pasaron primero a `pendiente_diagnostico` y,
-tras el diagnóstico N10 (abajo), a `especificacion`.
+**No queda ninguna celda `genuina`.**
 
-- **procedencia:** el número publicado salió de otra versión de los resultados o
-  de otra regla de agregación.
-- **especificación:** cambió el modelo de Swissmetro.
+- **procedencia:** el número publicado salió de otra versión de los resultados,
+  de otra regla de agregación o de otra especificación que la declarada en el
+  paper.
+- **especificación:** el corrigendum cambia el modelo o lo corrige a lo
+  declarado (Swissmetro; afirmaciones que dependen de ello).
 - **aritmética:** una cuenta o un cociente del texto está mal hecho.
-- **genuina:** ninguna de las causas anteriores explica la diferencia.
 
-De las 53 coincidencias de la Tabla 11 (SM-Centro 24, LC-Centro 22,
-Swissmetro 7), 26 son valores de magnitud ≤ 0,001 con tres decimales. Su
-coincidencia no informa mucho. Las coincidencias de la Tabla 8 y la Tabla 10
-de LC-Centro, en cambio, son exactas en todas las celdas.
+De las 67 coincidencias de la Tabla 11 (SM-Centro 24, LC-Centro 36,
+Swissmetro 7), 17 son la columna ORIG. de LC-Centro reproducida con ingreso;
+la celda restante de esa columna difiere por redondeo. Muchas de las demás son
+valores de magnitud ≤ 0,001 con tres decimales, cuya coincidencia informa
+poco.
 
 ## Qué cambia, tabla por tabla (lenguaje para el corrigendum)
 
@@ -42,12 +49,16 @@ de LC-Centro, en cambio, son exactas en todas las celdas.
 segundo decimal por redondeo (Metro SM-Centro: 32,46 %; Bus LC-Centro:
 27,14 %).
 
+**Tabla 4 (utilidades de LC-Centro y SM-Centro).** Se retira el jefe de hogar
+(HH). La Tabla 4 lo declara, pero la estimación publicada no lo incluía: con HH
+la columna ORIG. publicada no se reproduce (N10).
+
 **Tabla 6 (observaciones sintéticas).** Hay que reemplazarla completa
 (`aritmetica`). La tabla publicada mezcla tamaños de la muestra completa con un
 balanceo que en SM-Centro cuenta solo la clase minoritaria (279 = 332 − 53), y
 en Swissmetro usa una submuestra de 9.036 observaciones que no es la estimada
-(10.710; 9.036 son las filas con auto disponible). Con el procedimiento
-descrito en el pie de la propia tabla (balanceo dentro de cada fold de
+(10.710; 9.036 son las filas con auto disponible). Con el procedimiento que
+describe el pie de la propia tabla (balanceo dentro de cada fold de
 entrenamiento), los valores por fold son:
 
 - SM-Centro: 456 reales, 340,8 sintéticos (razón 0,75).
@@ -73,79 +84,81 @@ a **13** y **384**.
 
 **Tabla 8 (desempeño predictivo).**
 
-- **LC-Centro:** sin cambios.
-- **SM-Centro:** cambia el promedio, no los modelos. La tabla publicada promediaba
-  solo las particiones en que Apollo informó convergencia, y ese subconjunto era
-  distinto por método (class-weighting: 11 de 50). Ahora entran las 50 en todos
-  los métodos. El CVAE sigue siendo el mejor en F1 macro (0,727).
-- **Swissmetro:** cambian todas las celdas por la re-especificación (abajo). El
-  F1 macro sube en todos los métodos (original 0,441; CVAE 0,494; ROS 0,490;
-  SMOTE 0,477; class-weighting 0,491). **El orden cambia:** el CVAE pasa de
-  ser el peor de los métodos de balanceo a tener el F1 más alto, aunque con
-  diferencias frente a ROS y class-weighting menores que la desviación entre
-  particiones (≈ 0,009). Deja de valer la frase "SMOTE performs best".
+- **SM-Centro:** cambia el promedio, no los modelos. La tabla publicada
+  promediaba solo las particiones en que Apollo informó convergencia, y ese
+  subconjunto era distinto por método (class-weighting: 11 de 50). Ahora entran
+  las 50 en todos los métodos. El CVAE sigue siendo el mejor en F1 macro
+  (0,727).
+- **LC-Centro (N13):** la tabla publicada se estimó **sin ingreso**. Se
+  reproduce exacta desde `results/corrigendum_lc_sin_ingreso/`. La columna
+  ORIG. de la Tabla 11, en cambio, se estimó con ingreso. Con la especificación
+  de la Tabla 4:
+  - F1 macro: original 0,667; CVAE 0,678; SMOTE 0,709; ROS 0,710;
+    class-weighting 0,710.
+  - **El CVAE pasa a superar al original**, pero sigue siendo el peor de los
+    métodos de balanceo.
+  - Deja de valer "below the unbalanced baseline (0.676 vs. 0.682)".
+- **Swissmetro:** cambian todas las celdas por la re-especificación.
+  - F1 macro: original 0,441; CVAE 0,494; ROS 0,490; SMOTE 0,477;
+    class-weighting 0,491.
+  - El CVAE pasa de ser el peor de los métodos de balanceo a tener el F1 más
+    alto, con diferencias frente a ROS y class-weighting menores que la
+    desviación entre particiones (≈ 0,009).
+  - Deja de valer "SMOTE performs best".
 
-**Tabla 9 (elasticidad propia del tiempo del auto, SM-Centro).** Se reemplaza
-(`procedencia`). La tabla publicada provenía de un único modelo por método,
-estimado en una partición. Promediada sobre las 50 particiones, la elasticidad
-del CVAE es **−0,088** (SD 0,131): es negativa en media y positiva solo en el
-30 % de las particiones. Los demás métodos: original −0,146, ROS −0,143, SMOTE
-−0,153, class-weighting −0,143.
+En conjunto, **el CVAE mejora el F1 del original en los tres datasets** (el
+paper dice dos) y tiene el F1 más alto en SM-Centro y en Swissmetro (el paper
+dice solo SM-Centro). En Swissmetro la ventaja no es distinguible del ruido
+entre particiones.
 
-**La afirmación "under CVAE it becomes positive (+0.014)" no se sostiene y debe
-retirarse.** Las elasticidades que el CVAE invierte de forma sistemática en
-SM-Centro son las del tiempo de caminata (positiva en el 96 % de las
-particiones) y del tiempo de espera (100 %).
+**Tabla 9 (elasticidades, SM-Centro).** Se reemplaza (`procedencia`). Las
+**cinco** celdas publicadas, una por método, provenían de un único modelo
+estimado en una partición. Por ejemplo, el original pasa de −0,180 a −0,146
+sobre 50 particiones. La tabla corregida reporta media ± SD y % de particiones
+positivas:
+
+| método | espera Metro | espera Bus | viaje auto |
+|---|---|---|---|
+| Original | −0,119 ± 0,028 (0 %) | −0,063 ± 0,014 (0 %) | −0,146 ± 0,076 (8 %) |
+| CVAE | **+0,116 ± 0,020 (100 %)** | **+0,062 ± 0,011 (100 %)** | −0,088 ± 0,131 (30 %) |
+| ROS | −0,052 ± 0,036 (6 %) | −0,027 ± 0,018 (6 %) | −0,143 ± 0,054 (2 %) |
+| SMOTE | −0,084 ± 0,034 (0 %) | −0,047 ± 0,019 (0 %) | −0,153 ± 0,070 (2 %) |
+| Class-weighting | −0,056 ± 0,033 (0 %) | −0,028 ± 0,017 (0 %) | −0,143 ± 0,055 (2 %) |
+
+Hay un párrafo en inglés para el corrigendum en
+`docs/parrafo_elasticidades_corrigendum.md`. Correcciones de texto:
+
+- "walking time (b wkt) and travel time (b ivt)" → **"waiting time and walking
+  time (b_wt, b_wkt)"**.
+- La frase sobre un "systematic pattern across observations" en el tiempo de
+  viaje del auto se reemplaza por la evidencia entre particiones: la
+  elasticidad propia de la **espera** es positiva en el 100 % de las
+  particiones, y la del tiempo de viaje solo en el 30 %.
 
 **Tabla 10 (sensibilidad a la elipse).**
 
-- **LC-Centro:** sin cambios.
-- **SM-Centro:** varía en el tercer decimal por la misma regla de convergencia
-  que la Tabla 8 (0,728 / 0,727 / 0,727 / 0,729).
+- **SM-Centro:** varía en el tercer decimal por la regla de convergencia
+  (0,728 / 0,727 / 0,727 / 0,729).
+- **LC-Centro:** 0,680 / 0,678 / 0,678 / 0,679. Cambia por la especificación
+  con ingreso (N13).
 - **Swissmetro:** 0,494 en los cuatro niveles.
 
 La conclusión (robustez al nivel de la elipse) se mantiene.
 
 **Tabla 11 (coeficientes).**
 
-- **SM-Centro, columna ORIG.:** se reproduce con el MLE sobre la muestra
-  completa (dos celdas difieren por redondeo).
-- **SM-Centro y LC-Centro, columnas por método:** vienen de la versión
+- **Columna ORIG., SM-Centro y LC-Centro:** se reproduce con el MLE sobre la
+  muestra completa (LC-Centro ya con ingreso). Solo hay diferencias de
+  redondeo.
+- **Columnas por método, SM-Centro y LC-Centro:** vienen de la versión
   sometida, que tenía fuga de datos, y se reemplazan por las del pipeline
   corregido.
 - **Swissmetro:** cambia por la re-especificación.
-- **LC-Centro, columna ORIG.: otra especificación (N10).** La columna publicada
-  se estimó con la especificación de la Tabla 4, que incluye el ingreso en las
-  utilidades de Car Driver, Car Passenger y Bus (`b_mi_cd`, `b_mi_cp`,
-  `b_mi_bus`). La especificación del pipeline para LC-Centro no lo incluye.
-  Con N = 398 y esos tres términos agregados se reproducen los 9 coeficientes
-  publicados al tercer decimal, y 17 de 18 S.E. (el restante difiere por
-  redondeo). Evidencia: `docs/diagnostico_lc_orig.csv`, generado por
-  `experimental/diagnostico_lc_orig.R`.
-
-  Las otras hipótesis no reproducen la columna:
-
-  | variante | distancia media a lo publicado |
-  |---|---|
-  | sin disponibilidad | 0,749 |
-  | N = 444 con el modo 3 | 0,348 |
-  | N = 444 con el modo 3 e ingreso | 0,203 |
-  | spec del pipeline | 0,167 |
-  | ingreso + jefe de hogar en CP | 0,024 |
-  | **ingreso (Tabla 4)** | **0,000** |
-
-  **El paper es internamente inconsistente en LC-Centro.** La Tabla 4 y la
-  columna ORIG. de la Tabla 11 usan el ingreso; las Tablas 8 y 10, que el
-  pipeline reproduce exactas, se estimaron sin él. El corrigendum tiene que
-  elegir una especificación para LC-Centro y declararla:
-  - (a) corregir la Tabla 4 y la columna ORIG. a la especificación sin
-    ingreso;
-  - (b) re-estimar LC-Centro completo con ingreso. Esto cambia la
-    especificación de LC, que hoy es un invariante del repo, y requiere
-    autorización explícita.
-- **SM-Centro, filas nuevas:** se agregan los coeficientes de ingreso
-  (`b_mi_cd`, `b_mi_bus`), que están en la especificación (Tabla 4) pero se
-  habían omitido. Se reportan por cada 10.000 de ILM.
+- **Filas nuevas de ingreso:** en SM-Centro (`b_mi_cd`, `b_mi_bus`) y
+  LC-Centro (`b_mi_cd`, `b_mi_cp`, `b_mi_bus`). Están en la especificación
+  (Tabla 4), pero la Tabla 11 publicada las omitía: con ILM sin escalar sus
+  coeficientes son del orden de 1e-5 y redondean a 0,000. Se reportan por cada
+  10.000 de ILM.
 
 ## Afirmaciones del texto
 
@@ -160,6 +173,10 @@ La conclusión (robustez al nivel de la elipse) se mantiene.
 | `b_cost` negativo en todos los métodos, Swissmetro | sí | sí | coincide |
 | Datasets con inversión exclusiva del CVAE | 2 de 3 | 2 de 3 | coincide |
 | Fuente de las utilidades de Swissmetro | Salas et al. (2022) | convención Biogeme | procedencia |
+| HH en la utilidad de LC-Centro | sí (Tabla 4) | no | procedencia |
+| Efecto sistemático del CVAE, SM-Centro | tiempo de viaje del auto | espera Metro y Bus | procedencia |
+| Datasets donde el CVAE mejora el F1 del original | 2 | 3 | especificación |
+| Datasets donde el CVAE tiene el mayor F1 | SM-Centro | SM-Centro; Swissmetro | especificación |
 
 ## Hallazgos que el corrigendum debe declarar aunque no corresponden a una celda
 
@@ -169,14 +186,20 @@ La conclusión (robustez al nivel de la elipse) se mantiene.
    corrección de replicación. La frase sobre Salas et al. (2022) se reemplaza
    por la atribución a Bierlaire et al. (2001) (N7). Hay borrador de nota a la
    Tabla 3 en el §10 del diagnóstico.
-2. **"Dos de tres" se mantiene, pero no por las razones del paper (§11).** Con
+2. **Especificaciones mezcladas en el paper publicado (N13).** En LC-Centro, la
+   Tabla 8 (CV) se estimó sin ingreso y la columna ORIG. de la Tabla 11 con
+   ingreso. En Swissmetro, la Tabla 8 corresponde a la especificación reducida
+   (corrida A) y la Tabla 11 a la completa (corrida B). El corrigendum usa una
+   sola especificación por dataset en todas las tablas.
+3. **"Dos de tres" se mantiene, pero no por las razones del paper (§11).** Con
    la especificación publicada de Swissmetro, `b_cost` salía positivo en
    **todos** los métodos por omitir GA (N8). Con la especificación completa,
    la inversión era exclusiva del CVAE (tres de tres). Con el costo efectivo,
    ningún método la invierte. La cifra coincide con la del abstract, pero el
-   fundamento cambió y en SM-Centro uno de los coeficientes citados también
-   (`b_wt` en lugar de `b_ivt`).
-3. **Mecanismos propios del CVAE (N2, N6).** El CVAE genera las variables
+   fundamento cambió, y en SM-Centro uno de los coeficientes citados también
+   (`b_wt` en lugar de `b_ivt`). En LC-Centro, con ingreso, se mantienen `b_ivt`
+   y `b_tcw` como inversiones exclusivas del CVAE, y `b_wt` heredado del dato.
+4. **Mecanismos propios del CVAE (N2, N6).** El CVAE genera las variables
    condicionales (disponibilidad del auto, abono GA) de forma independiente de
    los atributos que dependen de ellas. En Swissmetro, entre sus sintéticos que
    eligen tren:
@@ -187,6 +210,6 @@ La conclusión (robustez al nivel de la elipse) se mantiene.
    estructurales, el CVAE recupera el signo de `b_cost`. Es un hallazgo
    metodológico que refuerza la recomendación práctica del paper: verificar la
    coherencia estructural de los datos sintéticos antes de estimar.
-4. **Regla de convergencia.** Todas las cifras promedian las 50 particiones en
+5. **Regla de convergencia.** Todas las cifras promedian las 50 particiones en
    todos los métodos y se informa cuántas no convergieron según Apollo. En
-   SM-Centro, tras reescalar el ingreso, todas convergen.
+   SM-Centro y LC-Centro, con el ingreso reescalado, todas convergen.

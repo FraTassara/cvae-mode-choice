@@ -348,3 +348,7 @@ texto,LC-Centro,CVAE,coeficientes invertidos exclusivos,b_ivt; b_tcw,p. 10: 'in-
 texto,Swissmetro,todos,b_cost negativo en todos los metodos,si,p. 10: 'travel cost coefficient is negative in the baseline and all methods'
 texto,todos,CVAE,datasets con inversion exclusiva del CVAE,2,p. 12: 'under CVAE in two of three datasets'
 texto,Swissmetro,,fuente de las utilidades,Salas et al. (2022),p. 8: 'identical to those used by Salas et al. (2022)'
+texto,LC-Centro,,variables de la utilidad: jefe de hogar (HH),si,"p. 9, Tabla 4: 'HH Head of Household'"
+texto,SM-Centro,CVAE,efecto sistematico del CVAE entre particiones,TVIA1,p. 12: 'a sample-level analysis confirms that the positive elasticity under CVAE reflects a systematic pattern across observations' (tiempo de viaje del auto)
+texto,todos,CVAE,datasets donde el CVAE mejora el F1 del original,2,p. 12: 'CVAE improves F1 macro over the unbalanced baseline only in two of three datasets'
+texto,todos,CVAE,datasets donde el CVAE tiene el mayor F1,SM-Centro,"p. 12: 'is the best method in only one (SM-Centro, F1: 0.724)'"

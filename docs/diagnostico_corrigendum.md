@@ -436,11 +436,37 @@ otra muestra u otra especificación. Diagnóstico, en orden:
 
 Evidencia: `experimental/diagnostico_lc_orig.R` → `docs/diagnostico_lc_orig.csv`.
 
-**Consecuencia: el paper es internamente inconsistente en LC-Centro.** La
-Tabla 4 y la columna ORIG. de la Tabla 11 incluyen el ingreso. Las Tablas 8 y
-10, que el pipeline reproduce exactas, se estimaron sin él. La decisión
-(corregir la Tabla 4, o re-estimar LC con ingreso, que rompe el invariante
-"no modificar la spec de LC") es de la autora.
+**Decisión (autora, 2026-10-18):** el corrigendum declara la especificación
+de la Tabla 4 con ingreso (`b_mi_cd`, `b_mi_cp`, `b_mi_bus`, `escalas: {ILM:
+1.0e-4}`), sin HH. Es una corrección a lo declarado, no una re-especificación.
+LC se re-estimó completo en `results/corrigendum/`; la versión sin ingreso
+queda en `results/corrigendum_lc_sin_ingreso/`. Resultados:
+
+- La columna ORIG. publicada se reproduce: 17 de 18 celdas exactas y 1 por
+  redondeo.
+- El conteo de reversiones no cambia: el CVAE invierte `b_ivt` (90 %) y `b_tcw`
+  (100 %) de forma exclusiva; `b_wt` es heredado (positivo en todos los
+  métodos).
+- Con ingreso, `b_tcw` queda más frágil en los métodos que no son CVAE: sigue
+  negativo en media, pero se invierte en el 30–54 % de las particiones.
+- 50/50 particiones convergidas en todos los métodos.
+- HH figura en la Tabla 4 pero no en la estimación publicada; el corrigendum
+  lo retira de la Tabla 4.
+
+**N13. El paper publicado mezcló especificaciones, `procedencia`.** En
+LC-Centro, la Tabla 8 (CV) coincide exacta con el pipeline **sin** ingreso,
+mientras que la columna ORIG. de la Tabla 11 se reproduce **con** ingreso. Es el
+mismo patrón que Swissmetro: Tabla 8 = corrida A (reducida), Tabla 11 = corrida
+B (completa), §11. Con la especificación única del corrigendum cambian las
+conclusiones predictivas de LC-Centro:
+
+- F1 macro: original 0,667; CVAE 0,678; ROS 0,710; SMOTE 0,709;
+  class-weighting 0,710.
+- El CVAE supera al original, pero sigue siendo el peor de los métodos de
+  balanceo.
+- El CVAE mejora el F1 del original en los tres datasets (el paper dice dos).
+
+(N11 y N12 no están asignadas.)
 
 **N5. [REVOCADA por §11] La inversión de `b_cost` bajo el CVAE persiste con D3.** Ocurre en el
 100 % de las particiones de CVAE y de `CVAE_conf70/90/95` (media +0,0001,

@@ -65,20 +65,24 @@ REGLAS = [
      "el paper promedia solo los folds marcados como convergidos (class_weights: 11/50); "
      "se reproduce exacto desde results/estimaciones_sm_centro.csv filtrando convergio "
      "(§2, regla única de convergio)"),
+    ("tabla_08", LC, None, "procedencia",
+     "el paper publicó la Tabla 8 de LC-Centro con la spec SIN ingreso (coincide exacta "
+     "con results/corrigendum_lc_sin_ingreso/), mientras la columna ORIG. de la Tabla 11 "
+     "se estimó CON ingreso; el corrigendum usa la spec de la Tabla 4, con ingreso (N13)"),
     ("tabla_09", None, None, "procedencia",
-     "el paper usa una sola partición (0, 0); el pipeline, media sobre 50 (N9)"),
+     "las cinco celdas publicadas (todos los métodos, no solo el CVAE) salen de un único "
+     "modelo por método estimado en la partición (0, 0); el pipeline promedia las 50 (N9)"),
     ("tabla_10", SW, None, *ESPEC_SW),
     ("tabla_10", SM, None, "procedencia",
      "el paper promedia solo los folds convergidos (§2)"),
+    ("tabla_10", LC, None, "procedencia",
+     "publicada con la spec de LC-Centro SIN ingreso; el corrigendum usa la de la "
+     "Tabla 4, con ingreso (N13)"),
     ("tabla_11", SW, None, *ESPEC_SW),
-    ("tabla_11", LC, r"^ORIG\.", "especificacion",
-     "la columna ORIG. publicada se estimó con la spec de la Tabla 4, que incluye "
-     "ingreso (b_mi_cd, b_mi_cp, b_mi_bus); config.yaml de LC-Centro no lo incluye. "
-     "Reproducida exacta con N = 398 (9/9 betas, 17/18 S.E. al tercer decimal): "
-     "docs/diagnostico_lc_orig.csv (N10)"),
-    # SM-Centro ORIG.: sin regla; el MLE de muestra completa reproduce el
-    # publicado y las diferencias que queden son de redondeo.
+    # ORIG. de SM-Centro y LC-Centro: sin regla. El MLE de muestra completa (LC ya
+    # con ingreso, N10) reproduce el publicado; lo que quede es redondeo.
     ("tabla_11", SM, r"^ORIG\.", None, None),
+    ("tabla_11", LC, r"^ORIG\.", None, None),
     ("tabla_11", None, None, "procedencia",
      "columnas por método tomadas de la versión sometida (con fuga de datos); no se "
      "reproducen desde los resultados validados ni desde el pipeline corregido"),
@@ -101,6 +105,22 @@ REGLAS_TEXTO = {
     "datasets con inversion exclusiva del CVAE": ("especificacion", ESPEC_SW[1]),
     "fuente de las utilidades": ("procedencia", "Salas et al. (2022) no estima "
                                  "Swissmetro (N7)"),
+    "datasets donde el CVAE mejora el F1 del original": (
+        "especificacion", "con la spec de la Tabla 4 (LC con ingreso, N13) y Swissmetro "
+        "re-especificado, el CVAE supera al original también en LC-Centro"),
+    "datasets donde el CVAE tiene el mayor F1": (
+        "especificacion", "con Swissmetro re-especificado (D3 + G1) el CVAE tiene el F1 "
+        "más alto también en Swissmetro, con diferencias menores que la SD entre "
+        "particiones (§11)"),
+    "variables de la utilidad: jefe de hogar (HH)": (
+        "procedencia", "la Tabla 4 declara HH, pero la estimación publicada no lo "
+        "incluía: con HH la columna ORIG. publicada no se reproduce (N10); el "
+        "corrigendum retira HH de la Tabla 4"),
+    "efecto sistematico del CVAE entre particiones": (
+        "procedencia", "el texto atribuye al tiempo de viaje del auto un patrón "
+        "sistemático que viene de una sola partición; sobre 50 particiones el efecto "
+        "sistemático del CVAE está en el tiempo de espera (N9, "
+        "docs/parrafo_elasticidades_corrigendum.md)"),
 }
 
 
@@ -176,6 +196,35 @@ def afirmaciones_texto(cfg) -> pd.DataFrame:
     filas.append(("todos", "CVAE", "datasets con inversion exclusiva del CVAE",
                   str(sum(bool(v) for v in exclusivos.values())),
                   f"{rel(R)}/tabla_signos_*.csv"))
+    # HH (jefe de hogar, columna JEFH) en la utilidad de LC-Centro, según config.
+    usa_hh = any("JEFH" in a["atributos"].values()
+                 for a in cfg.dataset("lc_centro")["modelo"]["alternativas"])
+    filas.append((LC, "", "variables de la utilidad: jefe de hogar (HH)",
+                  "si" if usa_hh else "no", "config.yaml (datasets.lc_centro.modelo)"))
+    # Covariables cuya elasticidad PROPIA es positiva bajo CVAE en todas las
+    # particiones (SM-Centro): el efecto sistemático entre particiones.
+    ds9 = P["tabla_09"]["dataset"]
+    er = pd.read_csv(R / f"efectos_marginales_resumen_{ds9}.csv")
+    # Solo covariables cuyo coeficiente tiene signo esperado negativo: una
+    # elasticidad propia positiva en ellas es una reversión.
+    esperados = cfg.dataset(ds9)["modelo"].get("signos_esperados", {})
+    attr = {a["id"]: {col for b, col in a["atributos"].items() if esperados.get(b) == -1}
+            for a in cfg.dataset(ds9)["modelo"]["alternativas"]}
+    propia = er[er.apply(lambda r: r.covariable in attr[r.alternativa], axis=1)]
+    sist = propia[(propia.metodo == "CVAE") & (propia.pct_positiva == 1)]
+    filas.append((P["datasets"][ds9], "CVAE", "efecto sistematico del CVAE entre particiones",
+                  "; ".join(sorted(sist.covariable)),
+                  rel(R / f"efectos_marginales_resumen_{ds9}.csv")))
+    # Desempeño predictivo del CVAE frente al original y al resto (Tabla 8).
+    t8 = pd.read_csv(RAIZ / P["destino"] / "tabla_08.csv", comment="#")
+    f1 = t8.pivot(index="Dataset", columns="Method", values="F1 Macro")
+    cvae, orig = P["metodos"]["CVAE"], P["metodos"]["original"]
+    mejora = [d for d in P["datasets"].values() if f1.loc[d, cvae] > f1.loc[d, orig]]
+    mejor = [d for d in P["datasets"].values() if f1.loc[d].idxmax() == cvae]
+    filas.append(("todos", "CVAE", "datasets donde el CVAE mejora el F1 del original",
+                  str(len(mejora)), f"{P['destino']}/tabla_08.csv"))
+    filas.append(("todos", "CVAE", "datasets donde el CVAE tiene el mayor F1",
+                  "; ".join(mejor), f"{P['destino']}/tabla_08.csv"))
     filas.append((SW, "", "fuente de las utilidades",
                   "convención Biogeme (Bierlaire et al., 2001)",
                   "docs/diagnostico_corrigendum.md §10"))
